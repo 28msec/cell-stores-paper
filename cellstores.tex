@@ -151,7 +151,79 @@ Cell stores bring back control to business users:
 
 \subsection{Gas of cells}
 
+As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. If you think or OLAP or XBRL, it is also called fact, or measure. If you think of a spreadsheet, it really corresponds to a cell. If you think of a relational database, it corresponds to a single value on a row.
+
+The cell can be seen as a atom of data, in that it represents the smallest possibly reportable unit of data. It has a single value, and this value is associated with dimensional coordinates that are string-value pairs. These dimensional coordinates are also called aspects, or properties, or characteristics. They uniquely identify a cell, and a consistent cell store should not contain any two cells with the exact same dimensional pairs.
+
+There are no limits to the number of dimension names and their value space. Cell stores scale up seamlessly with the total number of dimensions. There is only one required dimension called \emph{concept}, which describes \emph{what} the value represents. All other dimensions are left to the user's imagination, although typically you will find a validity period (instant or duration: when), an entity (who), a unit (of what), etc.
+
+Figure \ref{fig-cell} shows an example of a single cell.
+
+\begin{figure}
+\caption{An example of cell}
+\label{fig-cell}
+\begin{tabular}{l|l}
+\hline
+Dimension & Value \\
+\hline
+Concept & Assets \\
+Period & Sept. 30th, 2012 \\
+Entity & Visa \\
+Unit & US Dollars \\
+Class of Stock & Class of Stock Domain \\
+\hline\hline
+\multicolumn{2}{c}{\textbf{40,013,000,000}} \\
+\hline
+\end{tabular}
+\end{figure}
+
+The main idea of the cell store paradigm is that there is a single one, big collection of cells. All the data is in this collection, and on a logical level, this collection is not partitioned or ordered in any (logical) way. An analogy can be made with a gas of molecules, where the molecules fly around without any particular order or structure.
+
+In the same way as gas can be stored in containers, the cell gas can (should) be clustered and replicated to enhance the performance of the cell store. Whether clustering is done randomly or following a pattern based on dimension values is mostly driven by optimization and performance on a use case basis.
+
 \subsection{Hypercubes}
+
+\subsubsection{Point queries and indices}
+
+Now that we have a cell of gas available, we can begin to play with it. The first idea that comes to mind is how to retrieve a cell from the gas (point query).
+
+Point queries leverage the index capabilities of the underlying storage layer. If the cell gas is small and contains many concepts, a single hash index on the concept dimension will be enough. For bigger cell gas, other techniques allow scaling up, such as:
+\begin{itemize}
+\item compound keys: a single index on several fields such as concept, period and entity.
+\item separate hash keys: use single indices separately, and compute their intersection.
+\end{itemize}
+
+\subsubsection{Hypercube queries}
+In technologies such as OLAP, the first class citizen is the hypercube, which can be seen as the \emph{schema}. In cell stores, the hypercube can be seen as the \emph{query}.
+
+A hypercube is a dimensional range (as opposed to dimensional coordinates). It is made of a set of dimensions, and each dimension is associated with its range, which is a set of values. The range can be either an explicit enumeration (for example, for strings), or an interval (like the integers between 10 and 20), or also more complex multi-dimensional ranges (consider GIS).
+
+Figure \ref{fig-hypercube} shows an example of hypercube. It looks a bit like a cell, except that there is no value, and dimensions are associated with ranges rather than single values.
+
+\begin{figure}
+\caption{An example of hypercube}
+\label{fig-hypercube}
+\begin{tabular}{l|l}
+\hline
+Dimension & Value \\
+\hline
+Concept & Assets, Equity, Liabilities \\
+Period & Sept. 30th, 2012, Dec. 31st, 2012 \\
+Entity & Visa, Mastercard, American Express \\
+Unit & US Dollars \\
+\hline
+\end{tabular}
+\end{figure}
+
+Like point queries, hypercube queries also leverage indices. Range indices, in addition to or as an alternative to hash indices, prove particularly useful in the case of numeric or date dimension values. Domain-specific indices like GIS also fit well in this picture.
+
+\subsubsection{Default dimension values}
+
+Heterogeneity.
+
+\subsubsection{The ``Big Cube''}
+Since cells have dimensional \emph{coordinates}, they can be seen as a big data cube.
+
 
 \subsection{Spreadsheet views}
 
