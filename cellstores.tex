@@ -160,9 +160,9 @@ There are no limits to the number of dimension names and their value space. Cell
 Figure \ref{fig-cell} shows an example of a single cell.
 
 \begin{figure}
-\caption{An example of cell}
+\caption{A cell}
 \label{fig-cell}
-\begin{tabular}{l|l}
+\begin{tabular}{|l|l|}
 \hline
 Dimension & Value \\
 \hline
@@ -170,9 +170,9 @@ Concept & Assets \\
 Period & Sept. 30th, 2012 \\
 Entity & Visa \\
 Unit & US Dollars \\
-Class of Stock & Class of Stock Domain \\
-\hline\hline
-\multicolumn{2}{c}{\textbf{40,013,000,000}} \\
+Class of Stock & Class of Stock A \\
+\hline
+\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
 \hline
 \end{tabular}
 \end{figure}
@@ -200,10 +200,19 @@ A hypercube is a dimensional range (as opposed to dimensional coordinates). It i
 
 Figure \ref{fig-hypercube} shows an example of hypercube. It looks a bit like a cell, except that there is no value, and dimensions are associated with ranges rather than single values.
 
+A cell belongs to a hypercube if:
+
+\begin{itemize}
+\item it has exactly the same dimensions
+\item for each dimension, the value belongs to the domain of that dimension as specified in the hypercube
+\end{itemize}
+
+Figure \ref{fig-hypercube} also shows two cells satisfying the above criterion.
+
 \begin{figure}
-\caption{An example of hypercube}
+\caption{A hypercube containing 18 cells}
 \label{fig-hypercube}
-\begin{tabular}{l|l}
+\begin{tabular}{|l|l|}
 \hline
 Dimension & Value \\
 \hline
@@ -213,21 +222,162 @@ Entity & Visa, Mastercard, American Express \\
 Unit & US Dollars \\
 \hline
 \end{tabular}
+
+Example of cells within this hypercube:
+
+\begin{tabular}{|l|l|}
+\hline
+Dimension & Value \\
+\hline
+Concept & Equity \\
+Period & Dec. 31st, 2012 \\
+Entity & Mastercard \\
+Unit & US Dollars \\
+\hline
+\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\hline
+\end{tabular}
+\begin{tabular}{|l|l|}
+\hline
+Dimension & Value \\
+\hline
+Concept & Liabilities \\
+Period & Dec. 31st, 2012 \\
+Entity & American Express \\
+Unit & US Dollars \\
+\hline
+\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\hline
+\end{tabular}
 \end{figure}
 
 Like point queries, hypercube queries also leverage indices. Range indices, in addition to or as an alternative to hash indices, prove particularly useful in the case of numeric or date dimension values. Domain-specific indices like GIS also fit well in this picture.
 
 \subsubsection{Default dimension values}
 
-Heterogeneity.
+In cell stores, the number of dimensions and their names vary across cells. Hypercube queries accommodate for this flexibility with the notion of a default dimension value.
+
+Figure \ref{fig-default} shows a hypercube that defines a default value of "Domain" for the ``Class of Stock'' dimension.
+
+If a hypercube specifies a default value for a given dimension, then the condition that a cell must have that dimension to be included in the hypercube is relaxed. In particular, a cell will also be included if it does not have a ``Class of Stock'' dimension. When this happens, an additional dimensional pair is added to the cell on the fly, using the default value as value. This implies that in the end, the set of cells that gets returned for the hypercube query always has exactly the dimensions specified in the hypercube.
+
+\begin{figure}
+\caption{A hypercube using a default dimension value (shown in square brackets)}
+\label{fig-default}
+\begin{tabular}{|l|l|}
+\hline
+Dimension & Value \\
+\hline
+Concept & Assets, Equity, Liabilities \\
+Period & Sept. 30th, 2012 \\
+Entity & Visa, Mastercard, American Express \\
+Unit & US Dollars \\
+Class of Stock & Class of Stock A, [Domain] \\
+\hline
+\end{tabular}
+
+Example of cells within this hypercube:
+
+\begin{tabular}{|l|l|}
+\hline
+Dimension & Value \\
+\hline
+Concept & Assets \\
+Period & Sept. 30th, 2012 \\
+Entity & Visa \\
+Unit & US Dollars \\
+Class of Stock & Class of Stock A \\
+\hline
+\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\hline
+\end{tabular}
+
+\begin{tabular}{|l|l|}
+\hline
+Dimension & Value \\
+\hline
+Concept & Assets \\
+Period & Sept. 30th, 2012 \\
+Entity & Visa \\
+Unit & US Dollars \\
+\emph{Class of Stock} & \emph{[Domain]} \\
+\hline
+\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\hline
+\end{tabular}
+\end{figure}
+
+In particular, a hypercube is highly structured.
 
 \subsubsection{The ``Big Cube''}
-Since cells have dimensional \emph{coordinates}, they can be seen as a big data cube.
+Theoretically, it would be feasible to build a hypercube with all dimensions used in the gas of cells, allowing default values for all of these. Then all cells would belong to this hypercube. However, this is an extremely sparse hypercube, and the size of this hypercube would typically be orders of magnitude greater than the entire visible universe.
 
+\subsubsection{Materialized hypercube}
+
+The answer to a hypercube query can be showed in a consolidated way, resembling a relational table. Each column corresponds to a dimension, and the last column to the value. Figure \ref{fig-materialized} shows the materialized hypercube corresponding to the hypercube shown in Figure \ref{fig-default}.
+
+
+\begin{figure*}
+\caption{A materialized hypercube}
+\label{fig-materialized}
+\begin{tabular}{|c|c|c|c|c||c|}
+\hline
+Concept & Period & Entity & Unit & Class of Stock & Value \\
+\hline
+Assets & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & Visa &USD &  [Domain] & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
+Equity & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
+\hline
+\end{tabular}
+\end{figure*}
 
 \subsection{Spreadsheet views}
 
 \section{Canonical mapping to the relational model}
+
+There is a direct, two-way canonical mapping between hypercubes and relational tables.
+
+A materialized hypercube can be converted to a relational table with equivalent semantics by removing the Concept column, and replacing the Value column with one column for each Concept, as shown on Figure \ref{fig-relationalized}. The set of all attributes corresponding to the dimension columns acts as a primary key to the table.
+
+\begin{figure*}
+\caption{A relational table corresponding to a hypercube}
+\label{fig-relationalized}
+\begin{tabular}{|c|c|c|c||c|c|c|}
+\hline
+Period & Entity & Unit & Class of Stock & Assets & Equity & Liabilities \\
+\hline
+Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+
+Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+
+Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+
+Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+
+Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+
+\hline
+\end{tabular}
+\end{figure*}
+
+Conversely, any relational table can be converted to a cell gas and its corresponding hypercube as follows: each attribute in the primary key is converted to a dimension. A cell is
+then created for each row and for each value on that row that is not a primary key. This cell is associated with the dimensions values corresponding to the primary keys on the same row, plus the Concept dimension associated with the name of the attribute corresponding to the column.
 
 \section{Standardized Data Interchange: XBRL}
 
