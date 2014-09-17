@@ -379,6 +379,8 @@ Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 & 1,000,000
 Conversely, any relational table can be converted to a cell gas and its corresponding hypercube as follows: each attribute in the primary key is converted to a dimension. A cell is
 then created for each row and for each value on that row that is not a primary key. This cell is associated with the dimensions values corresponding to the primary keys on the same row, plus the Concept dimension associated with the name of the attribute corresponding to the column.
 
+The consequence of this is that an entire relational database with multiple tables, or even several relational databases, can be converted into a single cell store. Likewise, relational views can be built dynamically on top of a cell store.
+
 \section{Standardized Data Interchange: XBRL}
 
 Facts, taxonomies
