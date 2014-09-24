@@ -7,7 +7,7 @@
 \documentclass{vldb}
 \usepackage{graphicx}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
-
+\usepackage{multirow}
 
 \begin{document}
 
@@ -82,7 +82,7 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-false
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging the latest database technologies, such as key-value stores and document stores, in order to benefit from the latest technological breakthroughs to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exists in different forms: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users.
 \end{abstract}
 
 
@@ -348,6 +348,108 @@ Liabilities & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,0
 
 \subsection{Spreadsheet views}
 
+A hypercube can be materialised into a table as shown in the former section. With the state of matter analogy, it can be seen as the solid version of a (very small) subpart of the gas of cells.
+
+From a business viewpoint, tables are very useful because they can be understood without IT knowledge. However, a materialised hypercube displays the multidimensional data under a very raw form. This raw form is actually very common though, so that mainstream spreadsheet software provide a feature that allows interacting with multidimensional data with a better UI. This feature is often called \emph{pivot table} and flattens the data to a two-dimensional sheet.
+
+The dimensions are partitioned between:
+\begin{description}
+\item [Slicers] All the data that does not match the slicers is discarded.
+\item [Dicers] They specify, for each row and column, what dimensional constraints the data inside must fulfil
+\item [Values (potentially aggregated)] They specify, for each cell, which property is displayed as well as, if there are several values, how to aggregate them (sum, count, max, min, average, etc).
+\end{description}
+
+This functionality is straight-forward to implement on top of a cell store, because the raw data is in exactly the same form. The XBRL specifications also contain a feature called \emph{table link base} that standardises how to specify such spreadsheet views.
+
+Figure \ref{fig-spreadsheet} shows an example of how the materialised hypercube on Figure \ref{fig-materialized} can be displayed in this more business-oriented manner.
+
+Concretely, the construction of the view can be pushed to the server or the cell store itself:
+
+\begin{itemize}
+\item given a hypercube (and possibly the cells it contains, queried from the store), a spreadsheet can be smartly generated. Slicers are taken from all dimensions that only have a single value across the hypercube, concepts can be assigned to the rows and the remaining dimensions to the columns.
+\item given a spreadsheet definition (say, table link base), a hypercube can be generated in order to obtain all the relevant cells from the underlying cell store.
+\end{itemize}
+
+It is also still possible for a business user to obtain the materialised hypercube from the cell store, and to import it as is in their spreadsheet software.
+
+As is commonly done in spreadsheets, business users can drag and drop dimensions across the different categories to fine tune their view over the data. Spreadsheet views are not only convenient to read, but also to write data back to the cell store, cell by cell. Compared to the cell gas and the solid materialised hypercube, the spreadsheet view is comparable to a metal that gets melted before the blacksmith can shape it at will.
+
+Hence, because cell stores can use all the experience accumulated over several decades on pivot tables from the spreadsheet industry, they offer a very powerful and business friendly interface, shielding users from the underlying dimensional complexity.
+
+To a business user, working with a cell store feels like working on a spreadsheet, except that
+
+\begin{itemize}
+\item the size of the data is orders of magnitude bigger than a spreadsheet file;
+\item the data lies on a server and is shared across a department or a company;
+\item the latest database technologies are leveraged under the hood to scale up and out, without the need to go through the IT department for each change in the business taxonomy.
+\end{itemize}
+
+\begin{figure*}
+\caption{A spreadsheet view over a hypercube}
+\label{fig-spreadsheet}
+
+\begin{tabular}{|l||c|c|c|c|c|c|}
+\hline
+\textbf{Unit} & \multicolumn{6}{|l|}{USD} \\
+\hline
+\textbf{Period} & \multicolumn{6}{|l|}{Sept. 30th, 2012 } \\
+\hline
+\hline
+\multirow{4}{*}{Line items} & \multicolumn{6}{|c|}{\textbf{Entity}} \\
+\cline{2-7}
+
+& \multicolumn{2}{|c|}{Visa} & \multicolumn{2}{|c|}{Mastercard} & \multicolumn{2}{|c|}{American Express} \\
+\cline{2-7}
+
+& \multicolumn{2}{|c|}{\textbf{Class of Stock}} & \multicolumn{2}{|c|}{\textbf{Class of Stock}} & \multicolumn{2}{|c|}{\textbf{Class of Stock}} \\
+\cline{2-2}\cline{4-4}\cline{6-6}
+
+& Class of Stock A & & Class of Stock A &  & Class of Stock A & \\
+\hline
+\hline
+
+Assets & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+\hline
+
+Equity & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+\hline
+
+Liabilities & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+\hline
+\end{tabular}
+\end{figure*}
+
+\subsection{Maps}
+
+When many people define their own taxonomy, this often ends up in redundant terminology. For example, someone might use the term Equity and somebody else Capital. When either querying cells with a hypercube, or loading cells into a spreadsheet, a mapping can be applied so that this redundant terminology is transparent. This way, when a user asks for Equity, (i) she will also get the cells having the concept Capital, (ii) and it will be transparent to her because the Capital concept is overridden with the expected value Equity.
+
+\subsection{Rules}
+
+One of the reasons spreadsheets are very popular is that formulas can be entered into cells to automatically compute values.
+
+Cell stores support an equivalent capability called \emph{rules}. Like maps, rules are executed in a transparent way during a hypercube query, or when a spreadsheet is requested.
+
+From a high-level perspective, cell stores support two kinds of rules:
+
+\begin{description}
+\item[Imputation] rules computes a value for a missing cell (i.e., dimensional coordinates against which no value was reported). When generated, this cell comes along with an audit trail that indicates how the value was computed, and from which other cells.
+\item[Validation] rules check that the value for a given cell is consistent with the values reported in other cells (often neighbours in the spreadsheet view). A validation rule typically results in a green tick or a red cross in the corresponding cell on the spreadsheet view.
+\end{description}
+
+Rules can be defined according to several metapatterns, as defined by Charles Hoffman. It is most intuitive to think about them having in mind the spreadsheet view.
+
+\begin{description}
+\item [Roll Up] Several cells with different Concepts (but with the exact same other dimensions) are aggregated (often with a sum) into a roll up value. This corresponds to summing across a column or row in Excel.
+\item [Roll Forward] A value for a new instant in time is deduced from the equivalent value at a former time, as well as the delta value on the corresponding time interval.
+\item [Compound Fact] This is the same as a roll up, except that instead of the Concept varying, the aggregation is computed against a different dimension.
+\item [Adjustment] This is similar to a roll forward, except that the time correspond to transaction time, not valid time, and the delta corresponds to a correction or an amendment.
+\item [Variance] This is similar to a compound fact, except that the dimension used has the semantic of two different scenarios.
+\item [Complex Computation] This is a generalized roll-up.
+\item [Grid] This metapattern involves the conjunction of two other metapatterns, for example, in the spreadsheet view, a Roll Up on the rows and a Compound Fact on the columns.
+\end{description}
+
+To facilitate the definition of rules, concepts and dimension values are organised in hierarchies. For example, a roll up is typically a parent's being the sum of its children.
+
 \section{Canonical mapping to the relational model}
 
 There is a direct, two-way canonical mapping between hypercubes and relational tables.
@@ -383,13 +485,34 @@ The consequence of this is that an entire relational database with multiple tabl
 
 \section{Standardized Data Interchange: XBRL}
 
-Facts, taxonomies
+Many ideas behind the cell store paradigm originate from the XBRL standard. There are three main reasons for this:
 
-Concepts, dimensions, members, hypercubes
+\begin{itemize}
+\item The XBRL standard was designed by a team who is aware of the needs of business users, and of the challenges of business reporting.
+\item It is important that the data stored in a cell store is not locked in this cell store, i.e., that it can be exported in such a way that other users, even not cell store users, can understand it and use it without ETL efforts. The XBRL standard makes sure that this is so: cell stores can import XBRL data, and export their content into the XBRL format.
+\item Cell stores were designed with the goal of providing efficient storage and retrieving capabilities for XBRL data. They provide an abstract data model on top of XBRL that is a viable and efficient alternative to other implementations, such as storing each XBRL hypercube in ROLAP, or such as importing raw XBRL filings into an XML database.
+\end{itemize}
 
-Formulas
+XBRL is very complex and involves many different specifications.
 
-Table linkbases
+XBRL, on the physical level, uses XML technologies: filings are reported with a (flat) XML format, and metadata (called taxonomies) using XML Schema and XML Linkbases.
+
+The counterpart of a cell is called a fact. A numeric fact may also be stamped with information on the precision or the number of decimals.
+
+In XBRL, dimensions are called aspects. There are three ``builtin'' aspects in addition to Concept: Period, Entity and Unit, and taxonomies may define more dimensions.
+
+Taxonomies define concepts, hypercubes, dimensions, dimension values, can be shared at any level (reporting authority, company, department, etc) and extended at will.
+
+XBRL Linkbases provide metadata information in the form of ``networks'':
+
+\begin{description}
+\item[Definition] networks allow, among others, building hypercubes and specifying which concepts are bound to which hypercubes, which hypercubes have which dimensions, and which dimensions have which values. Dimensions may either have a typed value space, or be an explicitly enumerated set. 
+\item[Presentation] networks allow the hierarchisation of concepts and dimension values in a spreadsheet view (=Table link base in XBRL). For example, a balance sheet may be divided into an Assets hierarchy and an EquityAndLiabilities hierarchy. A presentation network can also contain abstract concepts, i.e., they are only here to organise and partition other concepts. 
+\item[Table linkbase] networks define how a spreadsheet view looks like, i.e., which are the slicers, the dicers, how the dicers are organised in rows and columns, etc.
+\item[Calculation] networks are the simplest kind of roll up rules.
+\item[Label] networks associate business-friendly labels to concepts, dimensions and dimension values, because the latter are often stored in a very raw form that is not palatable to non IT-savvy users.
+\item[Formula] networks define rules to automatically impute or validate fact values.
+\end{description}
 
 \section{Implementation}
 
@@ -415,7 +538,7 @@ secxbrl.info
 
 \section{Acknowledgements}
 
-This is joint work. The implementation of the first cell store on top of a document store has been made as a team effort by Matthias Brantner, William Candillon, Federico Cavalieri, Dennis Knochenwefel, Alexander Kreutz and myself.
+This is joint work. The implementation of the first cell store on top of a document store has been made as a team effort by Matthias Brantner, William Candillon, Federico Cavalieri, Dennis Knochenwefel, Alexander Kreutz and myself. We received a lot of very useful advice from Charles Hoffman.
 
 % The following two commands are all you need in the
 % initial runs of your .tex file to
