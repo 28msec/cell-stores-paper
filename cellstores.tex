@@ -118,13 +118,50 @@ Cell stores are at a sweet spot between on the one hand key-value stores, in tha
 Section... gives an overview of state of the art technologies for storing large quantities of highly dimensional data and their shortcomings. Section ... motivates the need for the cell stores paradigm. Section ... introduces the data model behind cell stores. Section ... shows how a relational database can be stored naturally in a cell store. Section... points out that there is a standard format for exchanging data between cell stores as well as other databases. Section... gives implementation-level details. Section... gives a few more miscellaneous remarks, and section... explores performance.
 
 \section{State of the art}
-Relational databases
 
-Key value stores
+\subsection{Relational databases}
 
-Document stores
+Relational databases are a very mature and stable technology, used everywhere in the world. It is based on the entity-relationship model and the powerful relational algebra, relying on the functional and declarative SQL language. It has the advantage that tables are very business friendly and easy to understand.
 
-Column stores
+However, relational databases showed their limits in the last decade, because they are monolithic and hard to scale up and out when the amount of data reaches the TB/PB range. It is very hard and expensive to make a relational schema evolve when the data is spread across multiple machines.
+
+Also, it is very challenging to maintain ACID properties beyond one machine, which is why a newer generation of databases was designed, dubbed as NoSQL even though they are diverse (key-value stores, document stores, column stores). ACID got replaced with the idea induced by the CAP theorem that consistency must be relaxed in order to ensure availability and partition tolerance.
+
+\subsection{Key-value stores}
+
+Key-value stores provide a very simple level of abstraction, organising the data as collections of key-value pairs. A collection can be partitioned across several machines, as well as replicated. Indexes allow very efficient data retrieval. Key-value stores are very friendly to powerful parallelism frameworks such as MapReduce, as stateless mappings can be performed in parallel in each location where the data lies.
+
+Key-value stores offer a very low-level interface that requires programmatic abilities to interact with
+
+Popular key-value stores are Amazon DynamoDB.
+
+\subsection{Document stores}
+
+Document stores are centred on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML, JSON, YAML or protocol buffers (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
+
+Document stores often over a very basic query language that allows filtering and projecting documents. It requires a host language on top to implement more elaborate functionality such as joins. 
+
+Popular document stores include MongoDB, Cloudant, CouchDB, ElasticSearch.
+
+\subsection{Column stores}
+
+Column stores, like relational databases, are table centric, but offer much more flexibility. In particular, they can be very sparse, because each row (seen as a sequence of columns) may have several absent columns (heterogeneity).
+
+However, private key columns are rigid, and all rows within a table must have exactly the private keys required by the schema. Tables must be created for each different private key topology.
+
+Popular document stores include BigTable, HBase, Cassandra.
+
+\subsection{OLAP}
+
+OLAP stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, aggregated (roll ups). OLAP is compatible with spreadsheet front ends using pivot table to visualize the data in a business-friendly way. The MDX language is a standard way of querying for data cubes. There are two main flavors of OLAP:
+\begin{description}
+\item[ROLAP] Data cubes are stored in tables organised in a snowflake setting: a central table with the data, and one additional table for each dimension. ROLAP is very rigid, and tables must be created for each data cube.
+\item[MOLAP] Data cubes are stored in an efficient proprietary in memory. Data cubes that are queried often are precomputed and pre-aggregated. MOLAP reaches its limits as soon as data cube queries are more diverse and hard to predict in advance.
+\end{description}
+
+A third flavor, HOLAP, is a hybrid of the two. OLAP does not scale up well beyond a few hundred dimensions.
+
+The main vendors (IBM, Microsoft, Oracle, SAP) offer an OLAP implementation.
 
 \section{Why cell stores}
 
