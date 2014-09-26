@@ -8,7 +8,7 @@
 \usepackage{graphicx}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \usepackage{multirow}
-
+\usepackage{listings}
 \begin{document}
 
 % ****************** TITLE ****************************************
@@ -94,18 +94,18 @@ The relational model's first implementation was made public in 1976 by IBM [cite
 In the last four decades, the relational model has been enjoying undisputed popularity and has been widely used in enterprise environments. This is probably because it is both very simple to understand and universal. Furthermore, it is accessible to business users without IT knowledge, to whom tabular structures are very natural --- as demonstrated by the strong usage of spreadsheet software (such as Microsoft Excel) as well as user-friendly front-ends (such as Microsoft Access).
 
 However, in the years 2000s, the exponential explosion of the quantity of data to deal with increasingly showed the limitations of this model. Several companies, such as Google, Facebook or Twitter needed scaling up and out beyond the capabilities of any RDBMS, both because of the \emph{quantity} of data (rows), and because of the \emph{high dimensionality} of this data (columns). Each of them built their own, ad-hoc data management system (Big Table, Cassandra, ...). These technologies often share the same design ideas (scale up through clustering and replication, high dimensionality handling through data heterogeneity and tree structures), which led to the popular common denomination of NoSQL, a common roof for:
-\begin{itemize}
-\item key-value stores
-\item document stores
-\item column stores
-\item graph databases
-\end{itemize}
+\begin{description}
+\item[Key-value stores], which store big collections of key-value pairs.
+\item[Document stores], which are document-oriented.
+\item[Column stores], which keep the table abstraction while allowing some sparseness.
+\item[Graph databases], which work at the lower triple level.
+\end{description}
 
 NoSQL solves the scale-up issue, but at a two-fold cost:
-\begin{itemize}
-\item for developers, the level of abstraction provided by NoSQL stores is much lower than that of the relational model. These data stores often provide limited querying capability such as point or range queries, insert, delete and update (CRUD). Higher-level operations such as joins must be implemented in a host language, on a case by case basis.
-\item for business users, these data models are much less natural than tabular data. Reading and editing data formats such as XML, JSON requires at least basic IT knowledge. Furthermore, business users should not have to deal with indexes at all.
-\end{itemize}
+\begin{description}
+\item[For developers], the level of abstraction provided by NoSQL stores is much lower than that of the relational model. These data stores often provide limited querying capability such as point or range queries, insert, delete and update (CRUD). Higher-level operations such as joins must be implemented in a host language, on a case by case basis.
+\item[For business users], these data models are much less natural than tabular data. Reading and editing data formats such as XML, JSON requires at least basic IT knowledge. Furthermore, business users should not have to deal with indexes at all.
+\end{description}
 
 This is a major step back from Codd's intentions back in the 1970s, as the very representations he wanted to protect users from (tree-like data structures, storage, ...) are pushed back to the user.
 
@@ -145,7 +145,7 @@ Popular document stores include MongoDB, Cloudant, CouchDB, ElasticSearch.
 
 \subsection{Column stores}
 
-Column stores, like relational databases, are table centric, but offer much more flexibility. In particular, they can be very sparse, because each row (seen as a sequence of columns) may have several absent columns (heterogeneity).
+Column stores, like relational databases, are table centric, but offer much more flexibility. In particular, they can be very sparse, because each row (seen as a sequence of columns) may have several absent columns (heterogeneity). Column store typically denormalize the data, optimizing projection and selection, avoiding the need for joins as much as possible.
 
 However, private key columns are rigid, and all rows within a table must have exactly the private keys required by the schema. Tables must be created for each different private key topology.
 
@@ -163,26 +163,41 @@ A third flavor, HOLAP, is a hybrid of the two. OLAP does not scale up well beyon
 
 The main vendors (IBM, Microsoft, Oracle, SAP) offer an OLAP implementation.
 
+\subsection{Graph databases}
+
+Graph databases manipulate graphs, mostly implemented as collections of triples (subject, attribute, object). The query language mostly used is SPARQL.
+
+Graph databases are very useful when dealing with semantic data, ontologies and AI. However, when dealing with structured, they become inefficient, because each single structured query needs to join multiple triples and aggregate them back into a meaningful format.
+
+\subsection{Spreadsheet Software}
+
+Surprisingly, the biggest database in the world might well be all those spreadsheet files lying around in mail boxes. This illustrates an impedance mismatch between business use cases and database solutions.
+
+Creating a database or a table on the servers often requires interacting with IT administrators. Many business users end up filling in their data into a spreadsheet and sending it to their colleagues. The data is copied -- sometimes even rekeyed from printed paper -- and sent again. This leads to:
+
+\begin{description}
+\item[Data duplication]: there exists several versions of the same data.
+\item [Inconsistencies]: it is not clear where the latest data is, and people might not agree or not know which values are correct among multiple files.
+\item[Mistakes]: upon copying or rekeying, mistakes can be introduced by humans that could have been avoided with a database.
+\item[High HR costs]: people copying, rekeying and sending e-mails has a concrete cost.
+\item[Information leak]: e-mails can be sent, by mistake or not, outside of the company.
+\end{description}
+
+Cell stores aim at keeping the excellent and proven spreadsheet interface, while fixing these issues by seamlessly integrating the spreadsheet with a database backend.
+
 \section{Why cell stores}
 
-Sparseness
-
-User-friendliness
-
-Cell stores bring back control to business users:
+Cell stores leverage the advantage of the aforementioned state-of-the-art technologies:
 
 \begin{itemize}
-
-\item scales up with heterogeneous data
-
-\item accessible via spreadsheet-like interface
-
-\item control of taxonomies (hierarchies of concepts)
-
-\item business rules
-
+\item Like key-value stores and document stores, it scales out with heterogeneous data. The data can be distributed across a cluster, replicated, and efficiently retrieved. It is also compatible with MapReduce-like parallelism paradigms.
+\item Like the relational model, cell stores expose the table abstraction.
+\item Like column stores, cell stores focus on projection and selection, and denormalize the data. 
+\item Like document stores, schemas are not needed upfront and can be provided at will at query time.
+\item Like OLAP, cell stores expose the data cube abstraction to the user.
+\item Cell stores can handle highly dimensional data, because storage works at the cell level.
+\item Cell stores expose the data via a familiar spreadsheet-like interface to the business users, who are in complete control of their taxonomies (schemas) and rules.
 \end{itemize}
-
 
 \section{The Cell Store Data Model}
 
@@ -520,6 +535,8 @@ then created for each row and for each value on that row that is not a primary k
 
 The consequence of this is that an entire relational database with multiple tables, or even several relational databases, can be converted into a single cell store. Likewise, relational views can be built dynamically on top of a cell store.
 
+A hypercube query corresponds to both a relational algebra projection and selection: a projection is nothing else than a selection done on the Concept dimension.
+
 \section{Standardized Data Interchange: XBRL}
 
 Many ideas behind the cell store paradigm originate from the XBRL standard. There are three main reasons for this:
@@ -555,27 +572,98 @@ XBRL Linkbases provide metadata information in the form of ``networks'', among w
 
 \subsection{On top of a document store: NoLAP}
 
+The first cell store implementation was done on top of a document store (MongoDB).
+
+From a document store metadata perspective implementation is very simple, as only two collections are used:
+
+
+\begin{figure}
+\caption{A cell represented as a JSON object (fact)}
+\label{fig-fact}
+\begin{lstlisting}
+{
+  "Aspects" : {
+    "Concept" : "Assets",
+    "Period" : "2012-09-30",
+    "Entity" : "Visa",
+    "Unit" : "USD"
+  }
+  "Value" : "1000000000"
+}
+\end{lstlisting}
+\end{figure}
+
+
+\begin{description}
+\item[facts] This is where the data lies. The SEC repository contains on the order of magnitude of one hundred million facts. Each fact is a JSON object as depicted on Figure \label{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
+\item[components] The metadata is stored here. Each component contains a hierarchy of concepts, a couple of hypercubes, a spreadsheet definition, business rules, concept metadata such as labels in various languages and documentation. Given a component, data cubes or spreadsheet views can be built.
+\end{description}
+
+Some more data such as XBRL filings and filer information, mostly structured, is stored in further collections. However, in view of the relational mapping depicted in Section ..., it is planned to also push this data to the cell store itself.
+
+Another collection (concepts) is used in order to optimize querying for concepts, including full text search, and finding out which components they appear in.
+
 \subsection{On top of a column store (e.g. Cassandra)}
 
+From a theoretical viewpoint, a cell store could fit in a sparse Cassandra table, but this would not scale up well: this would require as many primary keys as dimensions, as well as the materialization of default dimension values to special primary key values. Concepts would be materialized as additional attributes.
+
 \subsection{On top of a key-value store (DynamoDB)}
+
+The data in a cell store could be stored in a key-value store, possibly in an optimized format for retrieval and for saving space. However, document stores are more suitable for the storage of metadata, as tree structures are still quite useful for modelling business taxonomies.
+
+\subsection{On top of a graph database}
+
+A cell store could be stored in a graph database, by splitting each cell into several triples: the subject is the cell, one attribute for each dimension leading to the dimension value, an an attribute for the value. However, this would both lead to an increased number of ``atoms'' (on the order of magnitude of ten times more), and to inefficient retrieval, as each cell must be reassembled from the triples.
 
 \section{Miscellaneous}
 
 \subsection{Temporal databases}
 
-Transaction time
-
-Valid time
+Transaction time and valid time can both be stored as special dimensions.
 
 \section{Performance}
 
-secxbrl.info
+Measurements were performed on top of the first cell store repository, secxbrl.info.
+
+It contains 200 GB of data (70 millions of cells).
+
+Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East). These measurements were made from Europe, such that they contain some more latency (TODO: measure from US, as well as graphs and perhaps a benchmark like TPC-H using the relational mapping, comparing to relational database performances). 
+
+It can be seen that retrieval is (by one or two orders of magnitude) slightly less efficient than lower level NoSQL stores (which has to be, because it is run on top of a NoSQL store). The end goal of cell stores is that queries are done in a time acceptable by a human, that is, not more than a couple of seconds. The goal is achieved as these simple use cases show. Further cell store implementations (for example, a native cell store) are likely to improve this performance.
+
+Specific queries can still be run faster if need be, but this would still have to be done in the IT department.
+
+\begin{figure*}
+\caption{Typical execution times (via REST API)}
+\label{fig-measurements}
+\begin{tabular}{|l|l|}
+\hline
+Point query (one cell) & 200 ms \\
+\hline
+Query across a row (30 cells)& 500 ms \\
+\hline
+Query across two rows (95 cells)& 900 ms \\
+\hline
+Query of all (raw) cells in a component (77 cells) & 900 ms \\
+\hline
+Query of all cells in a component, including mapping, rule execution and validation (96 cells) & 2000 ms \\
+\hline
+Building a spreadsheet out of a component, including mapping, rule execution and validation (96 cells) & 2700 ms \\
+\hline
+\end{tabular}
+\end{figure*}
 
 \section{Conclusion}
+
+Cell stores leverage the latest database technologies, but completely give control over their data to business users. The data is stored at the cell level, in a single, big collection (gas of cells) and can be clustered and replicated, retrieved efficiently. Cells can be assembled into data cubes with hypercube queries, and assembled into spreadsheet views with which business users can interact (read, write) with the data. Business users can defined their own taxonomies, schemas, maps, rules without any interaction with the IT department.
 
 \section{Acknowledgements}
 
 This is joint work. The implementation of the first cell store on top of a document store has been made as a team effort by Matthias Brantner, William Candillon, Federico Cavalieri, Dennis Knochenwefel, Alexander Kreutz and myself. We received a lot of very useful advice from Charles Hoffman.
+
+\section{References}
+
+TODO
 
 % The following two commands are all you need in the
 % initial runs of your .tex file to
