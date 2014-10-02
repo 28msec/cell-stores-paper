@@ -571,9 +571,7 @@ It contains 200 GB of data (75 millions of cells).
 
 Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East).
 
-It can be seen that retrieval is (by one or two orders of magnitude) slightly less efficient than lower level NoSQL stores (which has to be, because it is run on top of a NoSQL store). The end goal of cell stores is that queries are done in a time acceptable by a human, that is, not more than a couple of seconds. The goal is achieved as these simple use cases show. Further cell store implementations (for example, a native cell store) are likely to improve this performance.
-
-Specific queries can still be run faster if need be, but this would still have to be done in the IT department.
+It can be seen that retrieval is (by one or two orders of magnitude) less efficient than lower level NoSQL stores (because it is run on top of a NoSQL store, with additional processing machinery). The end goal of cell stores is that queries are done in a time acceptable by a human, that is, not more than a couple of seconds. The goal is achieved as these simple use cases show. However, future cell store implementations (for example, a native cell store) are likely to improve this performance: as a rule of thumb, we hope to show that it should be feasible to achieve hypercube query performance close to that a filtering query in a document store.
 
 A future version of this paper will contain more elaborate comments on performance and more measurements. Also, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
 
@@ -604,7 +602,7 @@ Building a spreadsheet out of a component, including mapping, rule execution and
 
 The current cell store implementation focuses on hypercube queries, maps, rules and spreadsheet queries. In the future, it will be desirable to integrate cell stores tightly with MDX and SQL, and investigate how well cell stores scale up for more sophisticated operations such as joins. In other words, MDX queries can be translated to hypercube queries, and SQL queries can be translated to hypercube queries and some additional JSONiq machinery using the relational mapping.
 
-Also, a native cell store implementation (rather than the two-layer approached taken for our first implementation) is likely to deliver improved performance.
+Also, we will continue to work on improving performance. In a farther future, a native cell store implementation (rather than the two-layer approached taken for our first implementation) is likely to deliver improved performance.
 
 \section{Conclusion}
 
