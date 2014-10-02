@@ -573,8 +573,6 @@ Hypercube queries are done via a REST API, implemented in JSONiq and executed wi
 
 It can be seen that retrieval is (by one or two orders of magnitude) less efficient than lower level NoSQL stores (because it is run on top of a NoSQL store, with additional processing machinery). The end goal of this first implementation is to show feasibility (proof of concept), and to show that hypercube queries, maps, rules and spreadsheet queries are performed in a time acceptable by a human, that is, not more than a couple of seconds. This goal is achieved for these simple use cases, and for a repository size above the lower end of typical benchmarks (i.e., 100GB). Future cell store implementations (for example, a native cell store) are likely to improve this performance: as a rule of thumb, we hope to show that it should be feasible to achieve hypercube query performance close to that of a filtering query in a document store.
 
-A future version of this paper will contain more elaborate comments on performance and more measurements. Also, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
-
 \begin{figure*}
 \caption{Typical execution times (via REST API, average on 20 executions)}
 \label{fig-measurements}
@@ -600,9 +598,11 @@ Building a spreadsheet out of a component, including mapping, rule execution and
 
 \section{Future Work}
 
+A future version of this paper will contain more elaborate comments on performance and more measurements. Also, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
+
 The current cell store implementation focuses on hypercube queries, maps, rules and spreadsheet queries. In the future, it will be desirable to integrate cell stores tightly with MDX and SQL, and investigate how well cell stores scale up for more sophisticated operations such as joins. In other words, MDX queries can be translated to hypercube queries, and SQL queries can be translated to hypercube queries and some additional JSONiq machinery using the relational mapping.
 
-Also, we will continue to work on improving performance. In a farther future, a native cell store implementation (rather than the two-layer approached taken for our first implementation) is likely to deliver significantly better performance.
+Also, we will continue to work on improving performance. In a farther future, we aim at proving that our assumption that a native cell store implementation (rather than the two-layer approached taken for our first implementation) will deliver significantly better performance.
 
 \section{Conclusion}
 
