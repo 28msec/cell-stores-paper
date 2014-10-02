@@ -14,7 +14,7 @@
 \begin{document}
 % ****************** TITLE ****************************************
 
-\title{\textcolor{White}{Preliminary version |} Cell Stores \textcolor[rgb]{0.7,0.7,0.7}{| Preliminary version}}
+\title{Cell Stores}
 
 % possible, but not really needed or used for PVLDB:
 %\subtitle{[Extended Abstract]
@@ -83,7 +83,7 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging the latest database technologies, such as key-value stores and document stores, in order to benefit from the latest technological breakthroughs to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exists in different forms: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data.
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging the latest database technologies, such as key-value stores and document stores, in order to benefit from the latest technological breakthroughs to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exists in different forms, that can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
 \end{abstract}
 
 
@@ -112,7 +112,7 @@ This is a major step back from Codd's intentions back in the 1970s, as the very 
 
 Reluctance can be observed amongst non-technical users, and this might explain why the ``big three'' (Oracle, Microsoft, IBM) are heavily pushing towards using of the SQL language \cite{Chamberlin1974} on top of these data stores.
 
-This paper introduces the cell stores data paradigm, whose goal is to (i) leverage the technological advancements made in the last decade, while (ii) bringing back to business users control and understanding over their data. The cell store paradigm was vastly inspired by and abstracted from the XBRL standard \cite{XBRL}, which defines a serialization format for exchanging facts. Historically, cell stores were precisely designed in order to efficiently store and retrieve XBRL data. With time, this paradigm was decoupled from XBRL in such a way that it could also accommodate for data beyond business reporting. In particular, relational data can also be dropped into a cell store..
+This paper introduces the cell stores data paradigm, whose goal is to (i) leverage the technological advancements made in the last decade, while (ii) bringing back to business users control and understanding over their data. The cell store paradigm was vastly inspired by and abstracted from the XBRL standard \cite{XBRL}, which defines a serialization format for exchanging facts. Historically, cell stores were precisely designed in order to efficiently store and retrieve XBRL data. With time, this paradigm was decoupled from XBRL in such a way that it could also accommodate for data beyond business reporting. In particular, relational data can also be dropped into a cell store.
 
 Cell stores are at a sweet spot between on the one hand key-value stores, in that they scale up seamlessly and gracefully in the quantity of data as well as the dimensionality of the data, and on the other end the relational model, in that business users access the data in tabular views via familiar, spreadsheet-like interfaces.
 
@@ -628,7 +628,7 @@ A cell store could be stored in a graph database, by splitting each cell into se
 \label{section-performance}
 Measurements were performed on top of the first cell store repository, secxbrl.info.
 
-It contains 200 GB of data (70 millions of cells).
+It contains 200 GB of data (75 millions of cells).
 
 Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East).
 
@@ -636,7 +636,7 @@ It can be seen that retrieval is (by one or two orders of magnitude) slightly le
 
 Specific queries can still be run faster if need be, but this would still have to be done in the IT department.
 
-For a future version of this paper, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
+A future version of this paper will contain more elaborate comments on performance and more measurements. Also, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
 
 \begin{figure*}
 \caption{Typical execution times (via REST API, average on 20 executions)}
@@ -663,7 +663,7 @@ Building a spreadsheet out of a component, including mapping, rule execution and
 
 \section{Future Work}
 
-In the future, it will be desirable to integrate cell stores tightly with MDX and SQL. In other words, MDX queries can be translated to hypercube queries, and SQL queries can be translated to hypercube queries and some additional JSONiq machinery using the relational mapping.
+The current cell store implementation focuses on hypercube queries, maps, rules and spreadsheet queries. In the future, it will be desirable to integrate cell stores tightly with MDX and SQL, and investigate how well cell stores scale up for more sophisticated operations such as joins. In other words, MDX queries can be translated to hypercube queries, and SQL queries can be translated to hypercube queries and some additional JSONiq machinery using the relational mapping.
 
 Also, a native cell store implementation (rather than the two-layer approached taken for our first implementation) is likely to deliver improved performance.
 
