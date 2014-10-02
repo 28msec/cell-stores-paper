@@ -12,7 +12,6 @@
 \usepackage{url}
 \usepackage[usenames,dvipsnames]{color}
 \begin{document}
-
 % ****************** TITLE ****************************************
 
 \title{\textcolor{White}{Preliminary version |} Cell Stores \textcolor[rgb]{0.7,0.7,0.7}{| Preliminary version}}
@@ -208,6 +207,8 @@ Cell stores leverage the advantage of the aforementioned state-of-the-art techno
 \section{The Cell Store Data Model}
 \label{section-data-model}
 
+We know introduce the data model behind cell stores. All examples are fictitious (names, numbers).
+
 \subsection{Gas of cells}
 
 As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. If you think or OLAP or XBRL \cite{XBRL}, it is also called fact, or measure. If you think of a spreadsheet, it really corresponds to a cell. If you think of a relational database, it corresponds to a single value on a row.
@@ -227,11 +228,11 @@ Dimension & Value \\
 \hline
 Concept & Assets \\
 Period & Sept. 30th, 2012 \\
-Entity & Visa \\
+Entity & Visto \\
 Unit & US Dollars \\
-Class of Stock & Class of Stock A \\
+Region & United States \\
 \hline
-\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\multicolumn{2}{|c|}{\textbf{3,000,000,000}} \\
 \hline
 \end{tabular}
 \end{figure}
@@ -255,7 +256,7 @@ Point queries leverage the index capabilities of the underlying storage layer. I
 \subsubsection{Hypercube queries}
 In technologies such as OLAP, the first class citizen is the hypercube, which can be seen as the \emph{schema}. In cell stores, the hypercube can be seen as the \emph{query}.
 
-A hypercube is a dimensional range (as opposed to dimensional coordinates). It is made of a set of dimensions, and each dimension is associated with its range, which is a set of values. The range can be either an explicit enumeration (for example, for strings), or an interval (like the integers between 10 and 20), or also more complex multi-dimensional ranges (consider GIS).
+A hypercube is a dimensional range (as opposed to dimensional coordinates). It is made of a set of dimensions, and each dimension is associated with its range, which is a set of values. The range can be either an explicit enumeration (for example, for strings), or an interval (like the integers between 10 and 20), or also more complex multi-dimensional ranges (consider Geographic Information Systems (GIS)).
 
 Figure \ref{fig-hypercube} shows an example of hypercube. It looks a bit like a cell, except that there is no value, and dimensions are associated with ranges rather than single values.
 
@@ -277,7 +278,7 @@ Dimension & Value \\
 \hline
 Concept & Assets, Equity, Liabilities \\
 Period & Sept. 30th, 2012, Dec. 31st, 2012 \\
-Entity & Visa, Mastercard, American Express \\
+Entity & Visto, Championcard, American Rapid \\
 Unit & US Dollars \\
 \hline
 \end{tabular}
@@ -290,10 +291,10 @@ Dimension & Value \\
 \hline
 Concept & Equity \\
 Period & Dec. 31st, 2012 \\
-Entity & Mastercard \\
+Entity & Championcard \\
 Unit & US Dollars \\
 \hline
-\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\multicolumn{2}{|c|}{\textbf{5,000,000,000}} \\
 \hline
 \end{tabular}
 \begin{tabular}{|l|l|}
@@ -302,10 +303,10 @@ Dimension & Value \\
 \hline
 Concept & Liabilities \\
 Period & Dec. 31st, 2012 \\
-Entity & American Express \\
+Entity & American Rapid \\
 Unit & US Dollars \\
 \hline
-\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\multicolumn{2}{|c|}{\textbf{3,000,000,000}} \\
 \hline
 \end{tabular}
 \end{figure}
@@ -316,9 +317,9 @@ Like point queries, hypercube queries also leverage indices. Range indices, in a
 
 In cell stores, the number of dimensions and their names vary across cells. Hypercube queries accommodate for this flexibility with the notion of a default dimension value.
 
-Figure \ref{fig-default} shows a hypercube that defines a default value of "Domain" for the ``Class of Stock'' dimension.
+Figure \ref{fig-default} shows a hypercube that defines a default value of "Domain" for the ``Region'' dimension.
 
-If a hypercube specifies a default value for a given dimension, then the condition that a cell must have that dimension to be included in the hypercube is relaxed. In particular, a cell will also be included if it does not have a ``Class of Stock'' dimension. When this happens, an additional dimensional pair is added to the cell on the fly, using the default value as value. This implies that in the end, the set of cells that gets returned for the hypercube query always has exactly the dimensions specified in the hypercube.
+If a hypercube specifies a default value for a given dimension, then the condition that a cell must have that dimension to be included in the hypercube is relaxed. In particular, a cell will also be included if it does not have a ``Region'' dimension. When this happens, an additional dimensional pair is added to the cell on the fly, using the default value as value. This implies that in the end, the set of cells that gets returned for the hypercube query always has exactly the dimensions specified in the hypercube.
 
 \begin{figure}
 \caption{A hypercube using a default dimension value (shown in square brackets)}
@@ -329,9 +330,9 @@ Dimension & Value \\
 \hline
 Concept & Assets, Equity, Liabilities \\
 Period & Sept. 30th, 2012 \\
-Entity & Visa, Mastercard, American Express \\
+Entity & Visto, Championcard, American Rapid \\
 Unit & US Dollars \\
-Class of Stock & Class of Stock A, [Domain] \\
+Region & United States, [Domain] \\
 \hline
 \end{tabular}
 
@@ -343,11 +344,11 @@ Dimension & Value \\
 \hline
 Concept & Assets \\
 Period & Sept. 30th, 2012 \\
-Entity & Visa \\
+Entity & Visto \\
 Unit & US Dollars \\
-Class of Stock & Class of Stock A \\
+Region & United States \\
 \hline
-\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\multicolumn{2}{|c|}{\textbf{3,000,000,000}} \\
 \hline
 \end{tabular}
 
@@ -357,11 +358,11 @@ Dimension & Value \\
 \hline
 Concept & Assets \\
 Period & Sept. 30th, 2012 \\
-Entity & Visa \\
+Entity & Visto \\
 Unit & US Dollars \\
-\emph{Class of Stock} & \emph{[Domain]} \\
+\emph{Region} & \emph{[Domain]} \\
 \hline
-\multicolumn{2}{|c|}{\textbf{40,013,000,000}} \\
+\multicolumn{2}{|c|}{\textbf{4,000,000,000}} \\
 \hline
 \end{tabular}
 \end{figure}
@@ -381,26 +382,26 @@ The answer to a hypercube query can be showed in a consolidated way, resembling 
 \label{fig-materialized}
 \begin{tabular}{|c|c|c|c|c||c|}
 \hline
-Concept & Period & Entity & Unit & Class of Stock & Value \\
+Concept & Period & Entity & Unit & Region & Value \\
 \hline
-Assets & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
-Assets & Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 \\
-Assets & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
-Assets & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
-Assets & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
-Assets & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & Visa &USD &  [Domain] & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
-Equity & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 \\
-Liabilities & Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 \\
+Assets & Sept. 30th, 2012 & Visto & USD & United States & 3,000,000,000 \\
+Assets & Sept. 30th, 2012 & Visto & USD & [Domain] & 4,000,000,000 \\
+Assets & Sept. 30th, 2012 & Championcard & USD & United States & 6,000,000,000 \\
+Assets & Sept. 30th, 2012 & Championcard & USD & [Domain] & 8,000,000,000 \\
+Assets & Sept. 30th, 2012 & American Rapid & USD & United States & 5,000,000,000 \\
+Assets & Sept. 30th, 2012 & American Rapid & USD & [Domain] & 9,000,000,000 \\
+Equity & Sept. 30th, 2012 & Visto & USD & United States & 2,000,000,000 \\
+Equity & Sept. 30th, 2012 & Visto &USD &  [Domain] & 3,000,000,000 \\
+Equity & Sept. 30th, 2012 & Championcard & USD & United States & 4,000,000,000 \\
+Equity & Sept. 30th, 2012 & Championcard & USD & [Domain] & 5,000,000,000 \\
+Equity & Sept. 30th, 2012 & American Rapid & USD & United States & 3,000,000,000 \\
+Equity & Sept. 30th, 2012 & American Rapid & USD & [Domain] & 6,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Visto & USD & United States & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Visto & USD & [Domain] & 1,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Championcard & USD & United States & 2,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & Championcard & USD & [Domain] & 3,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & American Rapid & USD & United States & 2,000,000,000 \\
+Liabilities & Sept. 30th, 2012 & American Rapid & USD & [Domain] & 3,000,000,000 \\
 \hline
 \end{tabular}
 \end{figure*}
@@ -457,23 +458,23 @@ To a business user, working with a cell store feels like working on a spreadshee
 \multirow{4}{*}{Line items} & \multicolumn{6}{|c|}{\textbf{Entity}} \\
 \cline{2-7}
 
-& \multicolumn{2}{|c|}{Visa} & \multicolumn{2}{|c|}{Mastercard} & \multicolumn{2}{|c|}{American Express} \\
+& \multicolumn{2}{|c|}{Visto} & \multicolumn{2}{|c|}{Championcard} & \multicolumn{2}{|c|}{American Rapid} \\
 \cline{2-7}
 
-& \multicolumn{2}{|c|}{\textbf{Class of Stock}} & \multicolumn{2}{|c|}{\textbf{Class of Stock}} & \multicolumn{2}{|c|}{\textbf{Class of Stock}} \\
+& \multicolumn{2}{|c|}{\textbf{Region}} & \multicolumn{2}{|c|}{\textbf{Region}} & \multicolumn{2}{|c|}{\textbf{Region}} \\
 \cline{2-2}\cline{4-4}\cline{6-6}
 
-& Class of Stock A & & Class of Stock A &  & Class of Stock A & \\
+& United States & & United States &  & United States & \\
 \hline
 \hline
 
-Assets & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Assets & 3,000,000,000 & 4,000,000,000 & 6,000,000,000 & 8,000,000,000 & 5,000,000,000 & 9,000,000,000 \\
 \hline
 
-Equity & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Equity & 2,000,000,000 & 3,000,000,000 & 4,000,000,000 & 5,000,000,000 & 3,000,000,000 & 6,000,000,000 \\
 \hline
 
-Liabilities & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Liabilities & 1,000,000,000 & 1,000,000,000 & 2,000,000,000 & 3,000,000,000 & 2,000,000,000 & 3,000,000,000 \\
 \hline
 \end{tabular}
 \end{figure*}
@@ -520,18 +521,18 @@ A materialized hypercube can be converted to a relational table with equivalent 
 \label{fig-relationalized}
 \begin{tabular}{|c|c|c|c||c|c|c|}
 \hline
-Period & Entity & Unit & Class of Stock & Assets & Equity & Liabilities \\
+Period & Entity & Unit & Region & Assets & Equity & Liabilities \\
 \hline
-Sept. 30th, 2012 & Visa & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
-Sept. 30th, 2012 & Visa & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & Visto & USD & United States & 3,000,000,000 & 2,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & Visto & USD & [Domain] & 4,000,000,000 & 3,000,000,000 & 1,000,000,000 \\
 
-Sept. 30th, 2012 & Mastercard & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & Championcard & USD & United States & 6,000,000,000 & 4,000,000,000 & 2,000,000,000 \\
 
-Sept. 30th, 2012 & Mastercard & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & Championcard & USD & [Domain] & 8,000,000,000 & 5,000,000,000 & 3,000,000,000 \\
 
-Sept. 30th, 2012 & American Express & USD & Class of Stock A & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & American Rapid & USD & United States & 5,000,000,000 & 3,000,000,000 & 2,000,000,000 \\
 
-Sept. 30th, 2012 & American Express & USD & [Domain] & 1,000,000,000 & 1,000,000,000 & 1,000,000,000 \\
+Sept. 30th, 2012 & American Rapid & USD & [Domain] & 9,000,000,000 & 6,000,000,000 & 3,000,000,000 \\
 
 \hline
 \end{tabular}
@@ -546,7 +547,7 @@ A hypercube query corresponds to both a relational algebra projection and select
 
 \section{Standardized Data Interchange: XBRL}
 \label{section-xbrl-standard}
-Many ideas behind the cell store paradigm originate from the XBRL standard. There are three main reasons for this:
+Many ideas behind the cell store paradigm originate from the XBRL standard \cite{XBRL}. There are three main reasons for this:
 
 \begin{itemize}
 \item The XBRL standard was designed by a team who is aware of the needs of business users, and of the challenges of business reporting.
@@ -580,7 +581,7 @@ XBRL Linkbases provide metadata information in the form of ``networks'', among w
 
 \subsection{On top of a document store: NoLAP}
 
-The first cell store implementation was done on top of a document store (MongoDB).
+The first cell store implementation was done on top of a document store (MongoDB \cite{MongoDB}). It is available publicly \cite{SECXBRL.info} for DOW30 companies. Hypercube queries or spreadsheet queries can be made via a REST API.
 
 From a document store metadata perspective implementation is very simple, as only two collections are used:
 
@@ -593,17 +594,17 @@ From a document store metadata perspective implementation is very simple, as onl
   "Aspects" : {
     "Concept" : "Assets",
     "Period" : "2012-09-30",
-    "Entity" : "Visa",
+    "Entity" : "Visto",
     "Unit" : "USD"
   }
-  "Value" : "1000000000"
+  "Value" : "4000000000"
 }
 \end{lstlisting}
 \end{figure}
 
 
 \begin{description}
-\item[facts] This is where the data lies. The SEC repository contains on the order of magnitude of one hundred million facts. Each fact is a JSON object as depicted on Figure \label{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
+\item[facts] This is where the data lies. The SEC repository \cite{SECXBRL.info} contains on the order of magnitude of one hundred million facts. Each fact is a JSON object as depicted on Figure \label{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
 \item[components] The metadata is stored here. Each component contains a hierarchy of concepts, a couple of hypercubes, a spreadsheet definition, business rules, concept metadata such as labels in various languages and documentation. Given a component, data cubes or spreadsheet views can be built.
 \end{description}
 
@@ -629,31 +630,42 @@ Measurements were performed on top of the first cell store repository, secxbrl.i
 
 It contains 200 GB of data (70 millions of cells).
 
-Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East). These measurements were made from Europe, such that they contain some more latency (TODO: measure from US, as well as graphs and perhaps a benchmark like TPC-H using the relational mapping, comparing to relational database performances). 
+Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East).
 
 It can be seen that retrieval is (by one or two orders of magnitude) slightly less efficient than lower level NoSQL stores (which has to be, because it is run on top of a NoSQL store). The end goal of cell stores is that queries are done in a time acceptable by a human, that is, not more than a couple of seconds. The goal is achieved as these simple use cases show. Further cell store implementations (for example, a native cell store) are likely to improve this performance.
 
 Specific queries can still be run faster if need be, but this would still have to be done in the IT department.
 
+For a future version of this paper, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
+
 \begin{figure*}
-\caption{Typical execution times (via REST API)}
+\caption{Typical execution times (via REST API, average on 20 executions)}
 \label{fig-measurements}
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|}
 \hline
-Point query (one cell) & 200 ms \\
+Type of query & Number of cells & Time \\
 \hline
-Query across a row (30 cells)& 500 ms \\
 \hline
-Query across two rows (95 cells)& 900 ms \\
+Point query & 1 & 200 ms \\
 \hline
-Query of all (raw) cells in a component (77 cells) & 900 ms \\
+Query across a row&30& 300 ms \\
 \hline
-Query of all cells in a component, including mapping, rule execution and validation (96 cells) & 2000 ms \\
+Query across two dimensions&124& 400 ms \\
 \hline
-Building a spreadsheet out of a component, including mapping, rule execution and validation (96 cells) & 2700 ms \\
+Query of all (raw) cells in a component &82& 250 ms \\
+\hline
+Query of all cells in a component, including mapping, rule execution and validation& 96& 1500 ms \\
+\hline
+Building a spreadsheet out of a component, including mapping, rule execution and validation & 96 & 1900 ms \\
 \hline
 \end{tabular}
 \end{figure*}
+
+\section{Future Work}
+
+In the future, it will be desirable to integrate cell stores tightly with MDX and SQL. In other words, MDX queries can be translated to hypercube queries, and SQL queries can be translated to hypercube queries and some additional JSONiq machinery using the relational mapping.
+
+Also, a native cell store implementation (rather than the two-layer approached taken for our first implementation) is likely to deliver improved performance.
 
 \section{Conclusion}
 
