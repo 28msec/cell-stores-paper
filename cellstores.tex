@@ -9,11 +9,13 @@
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \usepackage{multirow}
 \usepackage{listings}
+\usepackage{url}
+\usepackage[usenames,dvipsnames]{color}
 \begin{document}
 
 % ****************** TITLE ****************************************
 
-\title{Cell Stores}
+\title{\textcolor{White}{Preliminary version |} Cell Stores \textcolor[rgb]{0.7,0.7,0.7}{| Preliminary version}}
 
 % possible, but not really needed or used for PVLDB:
 %\subtitle{[Extended Abstract]
@@ -87,16 +89,16 @@ Cell stores provide a relational-like, tabular level of abstraction to business 
 
 
 \section{Introduction}
-In 1970, Codd [cite] introduced the relational model as an alternative to the graph and network models (such as file systems) in order to provide a more suitable interface to users, and to protect them from internal representations (``data independence'').
+In 1970, Codd \cite{Codd1970} introduced the relational model as an alternative to the graph and network models (such as file systems) in order to provide a more suitable interface to users, and to protect them from internal representations (``data independence'').
 
-The relational model's first implementation was made public in 1976 by IBM [cite].
+The relational model's first implementation was made public in 1976 by IBM \cite{Astrahan1976}.
 
-In the last four decades, the relational model has been enjoying undisputed popularity and has been widely used in enterprise environments. This is probably because it is both very simple to understand and universal. Furthermore, it is accessible to business users without IT knowledge, to whom tabular structures are very natural --- as demonstrated by the strong usage of spreadsheet software (such as Microsoft Excel) as well as user-friendly front-ends (such as Microsoft Access).
+In the last four decades, the relational model has been enjoying undisputed popularity and has been widely used in enterprise environments. This is probably because it is both very simple to understand and universal. Furthermore, it is accessible to business users without IT knowledge, to whom tabular structures are very natural --- as demonstrated by the strong usage of spreadsheet software \cite{Mattessich1958} \cite{Mattessich1961} (such as Microsoft Excel, Apple Numbers, Lotus 1-2-3, OpenOffice Calc) as well as user-friendly front-ends (such as Microsoft Access).
 
-However, in the years 2000s, the exponential explosion of the quantity of data to deal with increasingly showed the limitations of this model. Several companies, such as Google, Facebook or Twitter needed scaling up and out beyond the capabilities of any RDBMS, both because of the \emph{quantity} of data (rows), and because of the \emph{high dimensionality} of this data (columns). Each of them built their own, ad-hoc data management system (Big Table, Cassandra, ...). These technologies often share the same design ideas (scale up through clustering and replication, high dimensionality handling through data heterogeneity and tree structures), which led to the popular common denomination of NoSQL, a common roof for:
+However, in the years 2000s, the exponential explosion of the quantity of data to deal with increasingly showed the limitations of this model. Several companies, such as Google, Facebook or Twitter needed scaling up and out beyond the capabilities of any RDBMS, both because of the \emph{quantity} of data (rows), and because of the \emph{high dimensionality} of this data (columns). Each of them built their own, ad-hoc data management system (Big Table \cite{Chang2008}, Cassandra \cite{Lakshman2010}, ...). These technologies often share the same design ideas (scale up through clustering and replication, high dimensionality handling through data heterogeneity and tree structures), which led to the popular common denomination of NoSQL, a common roof for:
 \begin{description}
 \item[Key-value stores], which store big collections of key-value pairs.
-\item[Document stores], which are document-oriented.
+\item[Document stores], which are document-oriented, typically supporting XML \cite{XML} or JSON \cite{JSON}.
 \item[Column stores], which keep the table abstraction while allowing some sparseness.
 \item[Graph databases], which work at the lower triple level.
 \end{description}
@@ -109,23 +111,24 @@ NoSQL solves the scale-up issue, but at a two-fold cost:
 
 This is a major step back from Codd's intentions back in the 1970s, as the very representations he wanted to protect users from (tree-like data structures, storage, ...) are pushed back to the user.
 
-Reluctance can be observed amongst users, and this might explain why the ``big three'' (Oracle, Microsoft, IBM) are heavily forcing the usage of the SQL language on top of these data stores.
+Reluctance can be observed amongst non-technical users, and this might explain why the ``big three'' (Oracle, Microsoft, IBM) are heavily pushing towards using of the SQL language \cite{Chamberlin1974} on top of these data stores.
 
-This paper introduces the cell stores data paradigm, whose goal is to (i) leverage the technological advancements made in the last decade, while (ii) bringing back to business users control and understanding over their data.
+This paper introduces the cell stores data paradigm, whose goal is to (i) leverage the technological advancements made in the last decade, while (ii) bringing back to business users control and understanding over their data. The cell store paradigm was vastly inspired by and abstracted from the XBRL standard \cite{XBRL}, which defines a serialization format for exchanging facts. Historically, cell stores were precisely designed in order to efficiently store and retrieve XBRL data. With time, this paradigm was decoupled from XBRL in such a way that it could also accommodate for data beyond business reporting. In particular, relational data can also be dropped into a cell store..
 
 Cell stores are at a sweet spot between on the one hand key-value stores, in that they scale up seamlessly and gracefully in the quantity of data as well as the dimensionality of the data, and on the other end the relational model, in that business users access the data in tabular views via familiar, spreadsheet-like interfaces.
 
-Section... gives an overview of state of the art technologies for storing large quantities of highly dimensional data and their shortcomings. Section ... motivates the need for the cell stores paradigm. Section ... introduces the data model behind cell stores. Section ... shows how a relational database can be stored naturally in a cell store. Section... points out that there is a standard format for exchanging data between cell stores as well as other databases. Section... gives implementation-level details. Section... gives a few more miscellaneous remarks, and section... explores performance.
+Section \ref{section-state-of-the-art} gives an overview of state of the art technologies for storing large quantities of highly dimensional data and their shortcomings. Section \ref{section-why} motivates the need for the cell stores paradigm. Section \ref{section-data-model} introduces the data model behind cell stores. Section \ref{section-relational-mapping} shows how a relational database can be stored naturally in a cell store. Section \ref{section-xbrl-standard} points out that there is a standard format for exchanging data between cell stores as well as other databases. Section \ref{section-implementation} gives implementation-level details. Section \ref{section-performance} explores performance.
 
 \section{State of the art}
+\label{section-state-of-the-art}
 
 \subsection{Relational databases}
 
-Relational databases are a very mature and stable technology, used everywhere in the world. It is based on the entity-relationship model and the powerful relational algebra, relying on the functional and declarative SQL language. It has the advantage that tables are very business friendly and easy to understand.
+Relational databases are a very mature and stable technology, used everywhere in the world. It is based on the entity-relationship model and the powerful relational algebra, relying on the functional and declarative SQL language \cite{Chamberlin1974}. It has the advantage that tables are very business friendly and easy to understand.
 
-However, relational databases showed their limits in the last decade, because they are monolithic and hard to scale up and out when the amount of data reaches the TB/PB range. It is very hard and expensive to make a relational schema evolve when the data is spread across multiple machines.
+However, relational databases showed their limits in the last decade, because they are monolithic and hard to scale up and out when the amount of data reaches the Terabyte to Petabyte range. It is very hard and expensive to make a relational schema evolve when the data is spread across multiple machines.
 
-Also, it is very challenging to maintain ACID properties beyond one machine, which is why a newer generation of databases was designed, dubbed as NoSQL even though they are diverse (key-value stores, document stores, column stores). ACID got replaced with the idea induced by the CAP theorem that consistency must be relaxed in order to ensure availability and partition tolerance.
+Also, it is very challenging to maintain ACID properties \cite{Haerder1983} beyond one machine, which is why a newer generation of databases was designed, dubbed as NoSQL even though they are diverse (key-value stores, document stores, column stores). ACID got replaced with the idea induced by the CAP theorem \cite{Gilbert2002} that consistency must be relaxed in order to ensure availability and partition tolerance.
 
 \subsection{Key-value stores}
 
@@ -133,15 +136,15 @@ Key-value stores provide a very simple level of abstraction, organising the data
 
 Key-value stores offer a very low-level interface that requires programmatic abilities to interact with
 
-Popular key-value stores are Amazon DynamoDB.
+Popular key-value stores are Amazon DynamoDB \cite{DeCandia2007}.
 
 \subsection{Document stores}
 
-Document stores are centred on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML, JSON, YAML or protocol buffers (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
+Document stores are centred on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML \cite{XML}, JSON \cite{JSON}, YAML \cite{YAML} or protocol buffers \cite{ProtocolBuffers} (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
 
 Document stores often over a very basic query language that allows filtering and projecting documents. It requires a host language on top to implement more elaborate functionality such as joins. 
 
-Popular document stores include MongoDB, Cloudant, CouchDB, ElasticSearch.
+Popular document stores include MongoDB \cite{MongoDB}, Cloudant \cite{Cloudant}, CouchDB \cite{CouchDB}, ElasticSearch \cite{ElasticSearch}.
 
 \subsection{Column stores}
 
@@ -149,11 +152,11 @@ Column stores, like relational databases, are table centric, but offer much more
 
 However, private key columns are rigid, and all rows within a table must have exactly the private keys required by the schema. Tables must be created for each different private key topology.
 
-Popular document stores include BigTable, HBase, Cassandra.
+Popular document stores include BigTable \cite{Chang2008}, HBase \cite{HBase}, Cassandra \cite{Lakshman2010}.
 
 \subsection{OLAP}
 
-OLAP stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, aggregated (roll ups). OLAP is compatible with spreadsheet front ends using pivot table to visualize the data in a business-friendly way. The MDX language is a standard way of querying for data cubes. There are two main flavors of OLAP:
+OLAP \cite{Codd1993} stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, aggregated (roll ups). OLAP is compatible with spreadsheet front ends using pivot table to visualize the data in a business-friendly way. The MDX language \cite{Nolan1999} is a standard way of querying for data cubes. There are two main flavors of OLAP:
 \begin{description}
 \item[ROLAP] Data cubes are stored in tables organised in a snowflake setting: a central table with the data, and one additional table for each dimension. ROLAP is very rigid, and tables must be created for each data cube.
 \item[MOLAP] Data cubes are stored in an efficient proprietary in memory. Data cubes that are queried often are precomputed and pre-aggregated. MOLAP reaches its limits as soon as data cube queries are more diverse and hard to predict in advance.
@@ -165,9 +168,11 @@ The main vendors (IBM, Microsoft, Oracle, SAP) offer an OLAP implementation.
 
 \subsection{Graph databases}
 
-Graph databases manipulate graphs, mostly implemented as collections of triples (subject, attribute, object). The query language mostly used is SPARQL.
+Graph databases manipulate graphs, mostly implemented as collections of triples (subject, attribute, object). The query language mostly used is SPARQL \cite{SPARQL}.
 
 Graph databases are very useful when dealing with semantic data, ontologies and AI. However, when dealing with structured, they become inefficient, because each single structured query needs to join multiple triples and aggregate them back into a meaningful format.
+
+Graph database implementations include ArangoDB \cite{ArangoDB}, Neo4j \cite{Neo4j}
 
 \subsection{Spreadsheet Software}
 
@@ -186,6 +191,7 @@ Creating a database or a table on the servers often requires interacting with IT
 Cell stores aim at keeping the excellent and proven spreadsheet interface, while fixing these issues by seamlessly integrating the spreadsheet with a database backend.
 
 \section{Why cell stores}
+\label{section-why}
 
 Cell stores leverage the advantage of the aforementioned state-of-the-art technologies:
 
@@ -200,10 +206,11 @@ Cell stores leverage the advantage of the aforementioned state-of-the-art techno
 \end{itemize}
 
 \section{The Cell Store Data Model}
+\label{section-data-model}
 
 \subsection{Gas of cells}
 
-As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. If you think or OLAP or XBRL, it is also called fact, or measure. If you think of a spreadsheet, it really corresponds to a cell. If you think of a relational database, it corresponds to a single value on a row.
+As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. If you think or OLAP \cite{OLAP} or XBRL \cite{XBRL}, it is also called fact, or measure. If you think of a spreadsheet, it really corresponds to a cell. If you think of a relational database, it corresponds to a single value on a row.
 
 The cell can be seen as a atom of data, in that it represents the smallest possibly reportable unit of data. It has a single value, and this value is associated with dimensional coordinates that are string-value pairs. These dimensional coordinates are also called aspects, or properties, or characteristics. They uniquely identify a cell, and a consistent cell store should not contain any two cells with the exact same dimensional pairs.
 
@@ -503,7 +510,7 @@ Rules can be defined according to several metapatterns, as defined by Charles Ho
 To facilitate the definition of rules, concepts and dimension values are organised in hierarchies. For example, a roll up is typically a parent's being the sum of its children.
 
 \section{Canonical mapping to the relational model}
-
+\label{section-relational-mapping}
 There is a direct, two-way canonical mapping between hypercubes and relational tables.
 
 A materialized hypercube can be converted to a relational table with equivalent semantics by removing the Concept column, and replacing the Value column with one column for each Concept, as shown on Figure \ref{fig-relationalized}. The set of all attributes corresponding to the dimension columns acts as a primary key to the table.
@@ -538,7 +545,7 @@ The consequence of this is that an entire relational database with multiple tabl
 A hypercube query corresponds to both a relational algebra projection and selection: a projection is nothing else than a selection done on the Concept dimension.
 
 \section{Standardized Data Interchange: XBRL}
-
+\label{section-xbrl-standard}
 Many ideas behind the cell store paradigm originate from the XBRL standard. There are three main reasons for this:
 
 \begin{itemize}
@@ -569,6 +576,7 @@ XBRL Linkbases provide metadata information in the form of ``networks'', among w
 \end{description}
 
 \section{Implementation}
+\label{section-implementation}
 
 \subsection{On top of a document store: NoLAP}
 
@@ -615,14 +623,8 @@ The data in a cell store could be stored in a key-value store, possibly in an op
 
 A cell store could be stored in a graph database, by splitting each cell into several triples: the subject is the cell, one attribute for each dimension leading to the dimension value, an an attribute for the value. However, this would both lead to an increased number of ``atoms'' (on the order of magnitude of ten times more), and to inefficient retrieval, as each cell must be reassembled from the triples.
 
-\section{Miscellaneous}
-
-\subsection{Temporal databases}
-
-Transaction time and valid time can both be stored as special dimensions.
-
 \section{Performance}
-
+\label{section-performance}
 Measurements were performed on top of the first cell store repository, secxbrl.info.
 
 It contains 200 GB of data (70 millions of cells).
@@ -661,15 +663,11 @@ Cell stores leverage the latest database technologies, but completely give contr
 
 This is joint work. The implementation of the first cell store on top of a document store has been made as a team effort by Matthias Brantner, William Candillon, Federico Cavalieri, Dennis Knochenwefel, Alexander Kreutz and myself. We received a lot of very useful advice from Charles Hoffman.
 
-\section{References}
-
-TODO
-
 % The following two commands are all you need in the
 % initial runs of your .tex file to
 % produce the bibliography for the citations in your paper.
 \bibliographystyle{abbrv}
-\bibliography{vldb_sample}  % vldb_sample.bib is the name of the Bibliography in this case
+\bibliography{cellstores}  % vldb_sample.bib is the name of the Bibliography in this case
 % You must have a proper ".bib" file
 %  and remember to run:
 % latex bibtex latex latex
