@@ -58,6 +58,8 @@ Cell stores are at a sweet spot between on the one hand key-value stores, in tha
 Section \ref{section-state-of-the-art} gives an overview of state of the art technologies for storing large quantities of highly dimensional data and their shortcomings. Section \ref{section-why} motivates the need for the cell stores paradigm. Section \ref{section-data-model} introduces the data model behind cell stores. Section \ref{section-relational-mapping} shows how a relational database can be stored naturally in a cell store. Section \ref{section-xbrl-standard} points out that there is a standard format for exchanging data between cell stores as well as other databases. Section \ref{section-implementation} gives implementation-level details. Section \ref{section-performance} explores performance.
 
 \section{State of the art}
+Before introducing the cell store paradigm in details, we quickly survey the current database/datastore landscape.
+
 \label{section-state-of-the-art}
 
 \subsection{Relational databases}
@@ -150,11 +152,11 @@ We know introduce the data model behind cell stores. All examples are fictitious
 
 \subsection{Gas of cells}
 
-As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. If you think or OLAP or XBRL \cite{XBRL}, it is also called fact, or measure. If you think of a spreadsheet, it really corresponds to a cell. If you think of a relational database, it corresponds to a single value on a row.
+As the name ``cell store'' indicates, the first class citizen in this paradigm is the cell. In the OLAP and XBRL \cite{XBRL} universes, it is also called fact, or measure. In the spreadsheet universe, it really corresponds to a cell. In the relational database universe, it corresponds to a single value on a row.
 
 The cell can be seen as an atom of data, in that it represents the smallest possibly reportable unit of data. It has a single value, and this value is associated with dimensional coordinates that are string-value pairs. These dimensional coordinates are also called aspects, or properties, or characteristics. They uniquely identify a cell, and a consistent cell store should not contain any two cells with the exact same dimensional pairs.
 
-There are no limits to the number of dimension names and their value space. Cell stores scale up seamlessly with the total number of dimensions. There is only one required dimension called \emph{concept}, which describes \emph{what} the value represents. All other dimensions are left to the user's imagination, although typically you will find a validity period (instant or duration: when), an entity (who), a unit (of what), etc.
+There are no limits to the number of dimension names and their value space. Cell stores scale up seamlessly with the total number of dimensions. There is only one required dimension called \emph{concept}, which describes \emph{what} the value represents. All other dimensions are left to the user's imagination, although typically a validity period (instant or duration: when), an entity (who), a unit (of what), a transaction time, etc, are to be commonly found as well.
 
 Figure \ref{fig-cell} shows an example of a single cell.
 
@@ -183,6 +185,8 @@ The main idea of the cell store paradigm is that there is a single one, big coll
 In the same way as gas can be stored in containers, the cell gas can (should) be clustered and replicated to enhance the performance of the cell store. Whether clustering is done randomly or following a pattern based on dimension values is mostly driven by optimization and performance on a use case basis.
 
 \subsection{Hypercubes}
+
+After cells, the next most important construct is the hypercube. In the cell store paradigm, hypercubes are queries that correspond to both selection and projection in the relational algebra. Unlike in the relational algebra though, selection and projection are the same.
 
 \subsubsection{Point queries and indices}
 
