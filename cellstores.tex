@@ -22,7 +22,7 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores, in order to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exist in different forms, that can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exist in different forms, that can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
 \end{abstract}
 
 
@@ -35,10 +35,10 @@ In the last four decades, the relational model has been enjoying undisputed popu
 
 However, in the years 2000s, the exponential explosion of the quantity of data to deal with increasingly showed the limitations of this model. Several companies, such as Google, Facebook or Twitter needed scaling up and out beyond the capabilities of any RDBMS, both because of the \emph{quantity} of data (rows), and because of the \emph{high dimensionality} of this data (columns). Each of them built their own, ad-hoc data management system (Big Table \cite{Chang2008}, Cassandra \cite{Lakshman2010}, ...). These technologies often share the same design ideas (scale up through clustering and replication, high dimensionality handling through data heterogeneity and tree structures), which led to the popular common denomination of NoSQL, a common roof for:
 \begin{description}
-\item[Key-value stores], which store big collections of key-value pairs. Example: DynamoDB.
-\item[Document stores], which are document-oriented, typically supporting XML \cite{XML} or JSON \cite{JSON}. Example: MongoDB.
-\item[Column stores], which keep the table abstraction while allowing some sparseness. Example: Cassandra.
-\item[Graph databases], which work at the lower triple level. Example: Neo4j.
+\item[Key-value stores] which store big collections of key-value pairs. Example: DynamoDB.
+\item[Document stores] which are document-oriented, typically supporting XML \cite{XML} or JSON \cite{JSON}. Example: MongoDB.
+\item[Column stores] which keep the table abstraction while allowing some sparseness. Example: Cassandra.
+\item[Graph databases] which work at the lower triple level. Example: Neo4j.
 \end{description}
 
 NoSQL solves the scale-up issue, but at a two-fold cost:
@@ -53,7 +53,7 @@ Reluctance can be observed amongst non-technical users, and this might explain w
 
 This paper introduces the cell stores data paradigm, whose goal is to (i) leverage the technological advancements made in the last decade, while (ii) bringing back to business users control and understanding over their data. The cell store paradigm was vastly inspired by and abstracted from the XBRL standard \cite{XBRL}, which defines a serialization format for exchanging facts. Historically, cell stores were precisely designed in order to efficiently store and retrieve XBRL data. With time, this paradigm was decoupled from XBRL in such a way that it could also accommodate for data beyond business reporting. In particular, relational data can also be dropped into a cell store.
 
-Cell stores are at a sweet spot between on the one hand key-value stores, in that they scale up seamlessly and gracefully in the quantity of data as well as the dimensionality of the data, and on the other end the relational model, in that business users access the data in tabular views via familiar, spreadsheet-like interfaces.
+Cell stores are at a sweet spot between on the one hand key-value stores, in that they scale up seamlessly and gracefully in the quantity of data as well as the dimensionality of the data, and on the other hand the relational model, in that business users access the data in tabular views via familiar, spreadsheet-like interfaces.
 
 Section \ref{section-state-of-the-art} gives an overview of state of the art technologies for storing large quantities of highly dimensional data and their shortcomings. Section \ref{section-why} motivates the need for the cell stores paradigm. Section \ref{section-data-model} introduces the data model behind cell stores. Section \ref{section-relational-mapping} shows how a relational database can be stored naturally in a cell store. Section \ref{section-xbrl-standard} points out that there is a standard format for exchanging data between cell stores as well as other databases. Section \ref{section-implementation} gives implementation-level details. Section \ref{section-performance} explores performance.
 
@@ -74,21 +74,21 @@ Also, it is very challenging to maintain ACID properties \cite{Haerder1983} beyo
 
 Key-value stores provide a very simple level of abstraction, organizing the data as collections of key-value pairs. A collection can be partitioned across several machines, as well as replicated. Indexes allow very efficient data retrieval. Key-value stores are very friendly to powerful parallelism frameworks such as MapReduce, as stateless mappings can be performed in parallel in each location where the data lies.
 
-Key-value stores offer a very low-level interface that requires programmatic abilities to interact with
+Key-value stores offer a very low-level interface that requires programmatic abilities to interact with.
 
 Popular key-value stores are Amazon DynamoDB \cite{DeCandia2007}.
 
 \subsection{Document stores}
 
-Document stores are centered on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML \cite{XML}, JSON \cite{JSON}, YAML \cite{YAML} or protocol buffers \cite{ProtocolBuffers} (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
+Document stores are centered on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML \cite{XML}, JSON \cite{JSON}, YAML \cite{YAML} or protocol buffers \cite{ProtocolBuffers} (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be built based on the content of these documents.
 
-Document stores often over a very basic query language that allows filtering and projecting documents. It requires a host language on top to implement more elaborate functionality such as joins. 
+Document stores often offer a very basic query language that allows filtering and projecting documents. They require a host language on top to implement more elaborate functionality such as joins. 
 
 Popular document stores include MongoDB \cite{MongoDB}, Cloudant \cite{Cloudant}, CouchDB \cite{CouchDB}, ElasticSearch \cite{ElasticSearch}.
 
 \subsection{Column stores}
 
-Column stores, like relational databases, are table centric, but offer much more flexibility. In particular, they can be very sparse, because each row (seen as a sequence of columns) may have several absent columns (heterogeneity). Column store typically denormalize the data, optimizing projection and selection, avoiding the need for joins as much as possible.
+Column stores, like relational databases, are table centric, but offer much more flexibility. In particular, they can be very sparse, because each row (specifically, a sequence of columns) may have several absent columns (heterogeneity). Column store typically denormalize the data, optimizing projection and selection, avoiding the need for joins as much as possible.
 
 However, private key columns are rigid, and all rows within a table must have exactly the private keys required by the schema. Tables must be created for each different private key topology.
 
@@ -108,24 +108,24 @@ The main vendors (IBM, Microsoft, Oracle, SAP) offer an OLAP implementation.
 
 \subsection{Graph databases}
 
-Graph databases manipulate graphs, mostly implemented as collections of triples (subject, attribute, object). The query language mostly used is SPARQL \cite{SPARQL}.
+Graph databases manipulate graphs, mostly implemented as collections of triples (subject, attribute, object). The most used query language is SPARQL \cite{SPARQL}.
 
 Graph databases are very useful when dealing with semantic data, ontologies and AI. However, when dealing with structured, they become inefficient, because each single structured query needs to join multiple triples and aggregate them back into a meaningful format.
 
-Graph database implementations include ArangoDB \cite{ArangoDB}, Neo4j \cite{Neo4j}
+Graph database implementations include ArangoDB \cite{ArangoDB}, Neo4j \cite{Neo4j}.
 
-\subsection{Spreadsheet Software}
+\subsection{Spreadsheet software}
 
 Surprisingly, the biggest database in the world might well be all those spreadsheet files lying around in mail boxes. This illustrates an impedance mismatch between business use cases and database solutions.
 
 Creating a database or a table on the servers often requires interacting with IT administrators. Many business users end up filling in their data into a spreadsheet and sending it to their colleagues. The data is copied -- sometimes even rekeyed from printed paper -- and sent again. This leads to:
 
 \begin{description}
-\item[Data duplication]: there exists several versions of the same data.
-\item [Inconsistencies]: it is not clear where the latest data is, and people might not agree or not know which values are correct among multiple files.
-\item[Mistakes]: upon copying or rekeying, mistakes can be introduced by humans that could have been avoided with a database.
-\item[High HR costs]: people copying, rekeying and sending e-mails has a concrete cost.
-\item[Information leak]: e-mails can be sent, by mistake or not, outside of the company.
+\item[Data duplication] There exists several versions of the same data.
+\item [Inconsistencies] It is not clear where the latest data is, and people might not agree or not know which values are correct among multiple files.
+\item[Mistakes] Upon copying or rekeying, mistakes can be introduced by humans that could have been avoided with a database.
+\item[High HR costs] People copying, rekeying and sending e-mails has a concrete cost.
+\item[Information leak] E-mails can be sent, by mistake or not, outside of the company.
 \end{description}
 
 Cell stores aim at keeping the excellent and proven spreadsheet interface, while fixing these issues by seamlessly integrating the spreadsheet with a database backend.
@@ -256,7 +256,7 @@ Unit & US Dollars \\
 \end{tabular}
 \end{figure}
 
-Like point queries, hypercube queries also leverage indices. Range indices, in addition to or as an alternative to hash indices, prove particularly useful in the case of numeric or date dimension values. Domain-specific indices like GIS also fit well in this picture.
+Like point queries, hypercube queries also leverage indices. Range indices, in addition to, or as an alternative to hash indices, prove particularly useful in the case of numeric or date dimension values. Domain-specific indices like GIS also fit well in this picture.
 
 \subsubsection{Default dimension values}
 
@@ -359,10 +359,10 @@ A hypercube can be materialized into a table as shown in the former section. Wit
 
 From a business viewpoint, tables are very useful because they can be understood without IT knowledge. However, a materialized hypercube displays the multidimensional data under a very raw form. This raw form is actually very common though, so that mainstream spreadsheet software provide a feature that allows interacting with multidimensional data with a better UI. This feature is often called \emph{pivot table} and flattens the data to a two-dimensional sheet.
 
-The dimensions are partitioned between:
+The dimensions are partitioned amongst:
 \begin{description}
 \item [Slicers] All the data that does not match the slicers is discarded.
-\item [Dicers] They specify, for each row and column, what dimensional constraints the data inside must fulfill
+\item [Dicers] They specify, for each row and column, what dimensional constraints the data inside must fulfill.
 \item [Values (potentially aggregated)] They specify, for each cell, which property is displayed as well as, if there are several values, how to aggregate them (sum, count, max, min, average, etc).
 \end{description}
 
@@ -377,13 +377,13 @@ Concretely, the construction of the view can be pushed to the server or the cell
 \item given a spreadsheet definition (say, table link base), a hypercube can be generated in order to obtain all the relevant cells from the underlying cell store.
 \end{itemize}
 
-It is also still possible for a business user to obtain the materialized hypercube from the cell store, and to import it as is in their spreadsheet software.
+It is also still possible for a business user to obtain the materialized hypercube from the cell store, and to import it as-is in their spreadsheet software.
 
 As is commonly done in spreadsheets, business users can drag and drop dimensions across the different categories to fine tune their view over the data. Spreadsheet views are not only convenient to read, but also to write data back to the cell store, cell by cell. Compared to the cell gas and the solid materialized hypercube, the spreadsheet view is comparable to a metal that gets melted before the blacksmith can shape it at will.
 
 Hence, because cell stores can use all the experience accumulated over several decades on pivot tables from the spreadsheet industry, they offer a very powerful and business friendly interface, shielding users from the underlying dimensional complexity.
 
-To a business user, working with a cell store feels like working on a spreadsheet, except that
+To a business user, working with a cell store feels like working on a spreadsheet, except that:
 
 \begin{itemize}
 \item the size of the data is orders of magnitude bigger than a spreadsheet file;
@@ -452,8 +452,8 @@ Rules can be defined according to several metapatterns, as defined by Charles Ho
 \item [Compound Fact] This is the same as a roll up, except that instead of the Concept varying, the aggregation is computed against a different dimension.
 \item [Adjustment] This is similar to a roll forward, except that the time correspond to transaction time, not valid time, and the delta corresponds to a correction or an amendment.
 \item [Variance] This is similar to a compound fact, except that the dimension used has the semantic of two different scenarios.
-\item [Complex Computation] This is a generalized roll-up.
-\item [Grid] This metapattern involves the conjunction of two other metapatterns, for example, in the spreadsheet view, a Roll Up on the rows and a Compound Fact on the columns.
+\item [Complex Computation] This is a generalized roll up.
+\item [Grid] This metapattern involves the conjunction of two other metapatterns, for example, in the spreadsheet view, a roll up on the rows and a compound fact on the columns.
 \end{description}
 
 To facilitate the definition of rules, concepts and dimension values are organized in hierarchies. For example, a roll up is typically a parent's being the sum of its children.
@@ -507,7 +507,7 @@ Many ideas behind the cell store paradigm originate from the XBRL standard \cite
 
 XBRL is very complex and involves many different specifications.
 
-XBRL, on the physical level, uses XML technologies: filings are reported with a (flat) XML format, and metadata (called taxonomies) using XML Schema and XML Link bases.
+XBRL, on the physical level, uses XML technologies: filings are reported with a (flat) XML format, and metadata (called taxonomies) using XML Schema and XML Link base.
 
 The counterpart of a cell is called a fact. A numeric fact may also be stamped with information on the precision or the number of decimals.
 
@@ -518,12 +518,12 @@ Taxonomies define concepts, hypercubes, dimensions, dimension values, can be sha
 XBRL Link bases provide metadata information in the form of ``networks'', among which:
 
 \begin{description}
-\item[Definition] networks allow, among others, building hypercubes and specifying which concepts are bound to which hypercubes, which hypercubes have which dimensions, and which dimensions have which values. Dimensions may either have a typed value space, or be an explicitly enumerated set. 
-\item[Presentation] networks allow the hierarchization of concepts and dimension values in a spreadsheet view (=Table link base in XBRL). For example, a balance sheet may be divided into an Assets hierarchy and an EquityAndLiabilities hierarchy. A presentation network can also contain abstract concepts, i.e., they are only here to organize and partition other concepts. 
-\item[Table link base] networks define how a spreadsheet view looks like, i.e., which are the slicers, the dicers, how the dicers are organized in rows and columns, etc.
-\item[Calculation] networks are the simplest kind of roll up rules.
-\item[Label] networks associate business-friendly labels to concepts, dimensions and dimension values, because the latter are often stored in a very raw form that is not palatable to non IT-savvy users.
-\item[Formula] networks define rules to automatically impute or validate fact values.
+\item[Definition networks] They allow, among others, building hypercubes and specifying which concepts are bound to which hypercubes, which hypercubes have which dimensions, and which dimensions have which values. Dimensions may either have a typed value space, or be an explicitly enumerated set. 
+\item[Presentation networks] They allow the hierarchization of concepts and dimension values in a spreadsheet view (=Table link base in XBRL). For example, a balance sheet may be divided into an Assets hierarchy and an EquityAndLiabilities hierarchy. A presentation network can also contain abstract concepts, i.e., they are only here to organize and partition other concepts. 
+\item[Table link bases] They define how a spreadsheet view looks like, i.e., which are the slicers, the dicers, how the dicers are organized in rows and columns, etc.
+\item[Calculation networks] They are the simplest kind of roll up rules.
+\item[Label networks] They associate business-friendly labels to concepts, dimensions and dimension values, because the latter are often stored in a very raw form that is not palatable to non IT-savvy users.
+\item[Formula networks] They define rules to automatically impute or validate fact values.
 \end{description}
 
 \section{Implementation}
@@ -538,7 +538,7 @@ From a document store metadata perspective implementation is very simple, as onl
 
 
 \begin{figure}
-\caption{A cell represented as a JSON object (fact). This is a simplified view, as additional fields may be added in order to optimize queries.}
+\caption{A cell represented as a JSON object (fact). This is a simplified view, as additional fields may be added in order to optimize queries. The value field is typed and the types are mapped to BSON.}
 \label{fig-fact}
 \begin{lstlisting}
 {
@@ -548,18 +548,18 @@ From a document store metadata perspective implementation is very simple, as onl
     "Entity" : "Visto",
     "Unit" : "USD"
   }
-  "Value" : "4000000000"
+  "Value" : 4000000000
 }
 \end{lstlisting}
 \end{figure}
 
 
 \begin{description}
-\item[facts] This is where the data lies. The SEC repository \cite{SECXBRL.info} contains on the order of magnitude of one hundred million facts. Each fact is a JSON object as depicted on Figure \label{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
+\item[facts] This is where the data lies. The SEC repository \cite{SECXBRL.info} contains on the order of magnitude of one hundred million facts. Each fact is a JSON object as depicted on Figure \ref{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
 \item[components] The metadata is stored here. Each component contains a hierarchy of concepts, a couple of hypercubes, a spreadsheet definition, business rules, concept metadata such as labels in various languages and documentation. Given a component, data cubes or spreadsheet views can be built.
 \end{description}
 
-Some more data such as XBRL filings and filer information, mostly structured, is stored in further collections. However, in view of the relational mapping depicted in Section ..., it is planned to also push this data to the cell store itself.
+Some more data such as XBRL filings and filer information, mostly structured, is stored in further collections. However, in view of the relational mapping depicted in Section \ref{section-relational-mapping}, it is planned to also push this data to the cell store itself.
 
 Another collection (concepts) is used in order to optimize querying for concepts, including full text search, and finding out which components they appear in.
 
