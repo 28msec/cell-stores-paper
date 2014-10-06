@@ -22,7 +22,7 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging the latest database technologies, such as key-value stores and document stores, in order to benefit from the latest technological breakthroughs to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exist in different forms, that can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores, in order to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exist in different forms, that can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
 \end{abstract}
 
 
@@ -35,10 +35,10 @@ In the last four decades, the relational model has been enjoying undisputed popu
 
 However, in the years 2000s, the exponential explosion of the quantity of data to deal with increasingly showed the limitations of this model. Several companies, such as Google, Facebook or Twitter needed scaling up and out beyond the capabilities of any RDBMS, both because of the \emph{quantity} of data (rows), and because of the \emph{high dimensionality} of this data (columns). Each of them built their own, ad-hoc data management system (Big Table \cite{Chang2008}, Cassandra \cite{Lakshman2010}, ...). These technologies often share the same design ideas (scale up through clustering and replication, high dimensionality handling through data heterogeneity and tree structures), which led to the popular common denomination of NoSQL, a common roof for:
 \begin{description}
-\item[Key-value stores], which store big collections of key-value pairs.
-\item[Document stores], which are document-oriented, typically supporting XML \cite{XML} or JSON \cite{JSON}.
-\item[Column stores], which keep the table abstraction while allowing some sparseness.
-\item[Graph databases], which work at the lower triple level.
+\item[Key-value stores], which store big collections of key-value pairs. Example: DynamoDB.
+\item[Document stores], which are document-oriented, typically supporting XML \cite{XML} or JSON \cite{JSON}. Example: MongoDB.
+\item[Column stores], which keep the table abstraction while allowing some sparseness. Example: Cassandra.
+\item[Graph databases], which work at the lower triple level. Example: Neo4j.
 \end{description}
 
 NoSQL solves the scale-up issue, but at a two-fold cost:
@@ -159,8 +159,10 @@ There are no limits to the number of dimension names and their value space. Cell
 Figure \ref{fig-cell} shows an example of a single cell.
 
 \begin{figure}
-\caption{A cell}
+\centering
+\caption{A cell. Each dimension is associated with a value. The value of the cell is shown at the bottom.}
 \label{fig-cell}
+\vspace{3mm}
 \begin{tabular}{|l|l|}
 \hline
 Dimension & Value \\
@@ -209,8 +211,10 @@ A cell belongs to a hypercube if:
 Figure \ref{fig-hypercube} also shows two cells satisfying the above criterion.
 
 \begin{figure}
-\caption{A hypercube containing 18 cells}
+\centering
+\caption{A hypercube containing 18 cells. Each dimension is associated with a range or set of values. Below it, two cells within this hypercube are shown.}
 \label{fig-hypercube}
+\vspace{3mm}
 \begin{tabular}{|l|l|}
 \hline
 Dimension & Value \\
@@ -221,8 +225,6 @@ Entity & Visto, Championcard, American Rapid \\
 Unit & US Dollars \\
 \hline
 \end{tabular}
-
-Example of cells within this hypercube:
 
 \begin{tabular}{|l|l|}
 \hline
@@ -261,7 +263,9 @@ Figure \ref{fig-default} shows a hypercube that defines a default value of "Doma
 If a hypercube specifies a default value for a given dimension, then the condition that a cell must have that dimension to be included in the hypercube is relaxed. In particular, a cell will also be included if it does not have a ``Region'' dimension. When this happens, an additional dimensional pair is added to the cell on the fly, using the default value as value. This implies that in the end, the set of cells that gets returned for the hypercube query always has exactly the dimensions specified in the hypercube.
 
 \begin{figure}
-\caption{A hypercube using a default dimension value (shown in square brackets)}
+\centering
+\caption{A hypercube using a default dimension value (shown in square brackets). Below it, two cells within this hypercube are shown. In the second cell, the default value was automatically inserted, although it does not appear in the original cell.}
+\vspace{3mm}
 \label{fig-default}
 \begin{tabular}{|l|l|}
 \hline
@@ -274,8 +278,6 @@ Unit & US Dollars \\
 Region & United States, [Domain] \\
 \hline
 \end{tabular}
-
-Example of cells within this hypercube:
 
 \begin{tabular}{|l|l|}
 \hline
@@ -317,7 +319,9 @@ The answer to a hypercube query can be showed in a consolidated way, resembling 
 
 
 \begin{figure*}
-\caption{A materialized hypercube}
+\centering
+\caption{A materialized hypercube. Each row corresponds to one cell. The last column contains the value of the cell, other columns correspond to the dimensions. Default values are automatically inserted, so that this is a highly structured data cube.}
+\vspace{3mm}
 \label{fig-materialized}
 \begin{tabular}{|c|c|c|c|c||c|}
 \hline
@@ -384,9 +388,10 @@ To a business user, working with a cell store feels like working on a spreadshee
 \end{itemize}
 
 \begin{figure*}
-\caption{A spreadsheet view over a hypercube}
+\centering
+\caption{A spreadsheet view over a hypercube. In this case, concepts are put on rows and the other dimensions on filters or on columns. The spreadsheet front end can support drag-and-drop, allowing the user to interactively rearrange rows, columns and filters.}
 \label{fig-spreadsheet}
-
+\vspace{3mm}
 \begin{tabular}{|l||c|c|c|c|c|c|}
 \hline
 \textbf{Unit} & \multicolumn{6}{|l|}{USD} \\
@@ -456,8 +461,10 @@ There is a direct, two-way canonical mapping between hypercubes and relational t
 A materialized hypercube can be converted to a relational table with equivalent semantics by removing the Concept column, and replacing the Value column with one column for each Concept, as shown on Figure \ref{fig-relationalized}. The set of all attributes corresponding to the dimension columns acts as a primary key to the table.
 
 \begin{figure*}
-\caption{A relational table corresponding to a hypercube}
+\caption{A relational table corresponding to a hypercube. The concept dimension is handled in a special way: all cells that have the same dimensions, but concept, are grouped in a business object, and displayed in the same row.}
+\centering
 \label{fig-relationalized}
+\vspace{3mm}
 \begin{tabular}{|c|c|c|c||c|c|c|}
 \hline
 Period & Entity & Unit & Region & Assets & Equity & Liabilities \\
@@ -516,17 +523,18 @@ XBRL Linkbases provide metadata information in the form of ``networks'', among w
 \end{description}
 
 \section{Implementation}
+We now give details on the existing implementation on top of MongoDB (NoLAP), as well as hints on how cell stores could also be implemented on top of other kinds of stores (in particular column stores).
 \label{section-implementation}
 
 \subsection{On top of a document store: NoLAP}
 
-The first cell store implementation was done on top of a document store (MongoDB \cite{MongoDB}). It is available publicly \cite{SECXBRL.info} for DOW30 companies. Hypercube queries or spreadsheet queries can be made via a REST API.
+The first cell store was implemented on top of a document store (MongoDB \cite{MongoDB}), entirely with the JSONiq language \cite{JSONiq}. The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly \cite{SECXBRL.info} for DOW 30 companies. Hypercube queries or spreadsheet queries can be made via a REST API.
 
 From a document store metadata perspective implementation is very simple, as only two collections are used:
 
 
 \begin{figure}
-\caption{A cell represented as a JSON object (fact)}
+\caption{A cell represented as a JSON object (fact). This is a simplified view, as additional fields may be added in order to optimize queries.}
 \label{fig-fact}
 \begin{lstlisting}
 {
@@ -551,11 +559,13 @@ Some more data such as XBRL filings and filer information, mostly structured, is
 
 Another collection (concepts) is used in order to optimize querying for concepts, including full text search, and finding out which components they appear in.
 
-\subsection{On top of a column store (e.g. Cassandra)}
+\subsection{On top of a column store (e.g., Cassandra)}
 
-From a theoretical viewpoint, a cell store could fit in a sparse Cassandra table, but this would not scale up well: this would require as many primary keys as dimensions, as well as the materialization of default dimension values to special primary key values. Concepts would be materialized as additional attributes.
+From a theoretical viewpoint, a cell store could fit in a sparse Cassandra table, but this would not scale up well: this would require as many primary keys as dimensions, as well as the materialization of default dimension values to special primary key values.
 
-\subsection{On top of a key-value store (DynamoDB)}
+Rather, dimensions could be set up as non-primary-key columns, using a UUID primary key instead. Secondary indices on the dimensional columns ensure efficient hypercube retrieval. In order to take advantage of the flexibility of Cassandra with respect to columns, the \emph{concept} dimension could be handled separately, with all cells corresponding to the same business object (that is, all dimensions but \emph{concept} have the same values) on the same row. This corresponds to the relational mapping mentioned in Section \ref{section-relational-mapping}.
+
+\subsection{On top of a key-value store}
 
 The data in a cell store could be stored in a key-value store, possibly in an optimized format for retrieval and for saving space. However, document stores are more suitable for the storage of metadata, as tree structures are still quite useful for modelling business taxonomies.
 
@@ -574,8 +584,10 @@ Hypercube queries are done via a REST API, implemented in JSONiq and executed wi
 It can be seen that retrieval is (by one or two orders of magnitude) less efficient than lower level NoSQL stores (because it is run on top of a NoSQL store, with additional processing machinery). The end goal of this first implementation is to show feasibility (proof of concept), and to show that hypercube queries, maps, rules and spreadsheet queries are performed in a time acceptable by a human, that is, not more than a couple of seconds. This goal is achieved for these simple use cases, and for a repository size above the lower end of typical benchmarks (i.e., 100GB). Future cell store implementations (for example, a native cell store) are likely to improve this performance: as a rule of thumb, we hope to show that it should be feasible to achieve hypercube query performance close to that of a filtering query in a document store.
 
 \begin{figure*}
-\caption{Typical execution times (via REST API, average on 20 executions)}
+\caption{Typical execution times. These were obtained on the proof-of-concept implementation on top of MongoDB, on a repository with 75 millions of cells. The queries were executed through a hypercube-building REST API, and an average was taken on 20 executions). All times are below the threshold acceptable for human interaction.}
+\centering
 \label{fig-measurements}
+\vspace{3mm}
 \begin{tabular}{|l|l|l|}
 \hline
 Type of query & Number of cells & Time \\
