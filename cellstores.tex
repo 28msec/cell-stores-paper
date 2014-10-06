@@ -72,7 +72,7 @@ Also, it is very challenging to maintain ACID properties \cite{Haerder1983} beyo
 
 \subsection{Key-value stores}
 
-Key-value stores provide a very simple level of abstraction, organising the data as collections of key-value pairs. A collection can be partitioned across several machines, as well as replicated. Indexes allow very efficient data retrieval. Key-value stores are very friendly to powerful parallelism frameworks such as MapReduce, as stateless mappings can be performed in parallel in each location where the data lies.
+Key-value stores provide a very simple level of abstraction, organizing the data as collections of key-value pairs. A collection can be partitioned across several machines, as well as replicated. Indexes allow very efficient data retrieval. Key-value stores are very friendly to powerful parallelism frameworks such as MapReduce, as stateless mappings can be performed in parallel in each location where the data lies.
 
 Key-value stores offer a very low-level interface that requires programmatic abilities to interact with
 
@@ -80,7 +80,7 @@ Popular key-value stores are Amazon DynamoDB \cite{DeCandia2007}.
 
 \subsection{Document stores}
 
-Document stores are centred on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML \cite{XML}, JSON \cite{JSON}, YAML \cite{YAML} or protocol buffers \cite{ProtocolBuffers} (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
+Document stores are centered on the concept of document. It can be seen as a key-value store where values are not black boxes, but instead are XML \cite{XML}, JSON \cite{JSON}, YAML \cite{YAML} or protocol buffers \cite{ProtocolBuffers} (or even word processor, spreadsheet, files, ...) documents. Documents are often arborescent and organized in heterogeneous collections. Secondary indexes can be build based on the content of these documents.
 
 Document stores often over a very basic query language that allows filtering and projecting documents. It requires a host language on top to implement more elaborate functionality such as joins. 
 
@@ -98,7 +98,7 @@ Popular document stores include BigTable \cite{Chang2008}, HBase \cite{HBase}, C
 
 OLAP \cite{Codd1993} stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, aggregated (roll ups). OLAP is compatible with spreadsheet front ends using pivot table to visualize the data in a business-friendly way. The MDX language \cite{Nolan1999} is a standard way of querying for data cubes. There are two main flavors of OLAP:
 \begin{description}
-\item[ROLAP] Data cubes are stored in tables organised in a snowflake setting: a central table with the data, and one additional table for each dimension. ROLAP is very rigid, and tables must be created for each data cube.
+\item[ROLAP] Data cubes are stored in tables organized in a snowflake setting: a central table with the data, and one additional table for each dimension. ROLAP is very rigid, and tables must be created for each data cube.
 \item[MOLAP] Data cubes are stored in an efficient proprietary in memory. Data cubes that are queried often are precomputed and pre-aggregated. MOLAP reaches its limits as soon as data cube queries are more diverse and hard to predict in advance.
 \end{description}
 
@@ -355,20 +355,20 @@ Liabilities & Sept. 30th, 2012 & American Rapid & USD & [Domain] & 3,000,000,000
 
 \subsection{Spreadsheet views}
 
-A hypercube can be materialised into a table as shown in the former section. With the state of matter analogy, it can be seen as the solid version of a (very small) subpart of the gas of cells.
+A hypercube can be materialized into a table as shown in the former section. With the state of matter analogy, it can be seen as the solid version of a (very small) subpart of the gas of cells.
 
-From a business viewpoint, tables are very useful because they can be understood without IT knowledge. However, a materialised hypercube displays the multidimensional data under a very raw form. This raw form is actually very common though, so that mainstream spreadsheet software provide a feature that allows interacting with multidimensional data with a better UI. This feature is often called \emph{pivot table} and flattens the data to a two-dimensional sheet.
+From a business viewpoint, tables are very useful because they can be understood without IT knowledge. However, a materialized hypercube displays the multidimensional data under a very raw form. This raw form is actually very common though, so that mainstream spreadsheet software provide a feature that allows interacting with multidimensional data with a better UI. This feature is often called \emph{pivot table} and flattens the data to a two-dimensional sheet.
 
 The dimensions are partitioned between:
 \begin{description}
 \item [Slicers] All the data that does not match the slicers is discarded.
-\item [Dicers] They specify, for each row and column, what dimensional constraints the data inside must fulfil
+\item [Dicers] They specify, for each row and column, what dimensional constraints the data inside must fulfill
 \item [Values (potentially aggregated)] They specify, for each cell, which property is displayed as well as, if there are several values, how to aggregate them (sum, count, max, min, average, etc).
 \end{description}
 
-This functionality is straight-forward to implement on top of a cell store, because the raw data is in exactly the same form. The XBRL specifications also contain a feature called \emph{table link base} that standardises how to specify such spreadsheet views.
+This functionality is straight-forward to implement on top of a cell store, because the raw data is in exactly the same form. The XBRL specifications also contain a feature called \emph{table link base} that standardizes how to specify such spreadsheet views.
 
-Figure \ref{fig-spreadsheet} shows an example of how the materialised hypercube on Figure \ref{fig-materialized} can be displayed in this more business-oriented manner.
+Figure \ref{fig-spreadsheet} shows an example of how the materialized hypercube on Figure \ref{fig-materialized} can be displayed in this more business-oriented manner.
 
 Concretely, the construction of the view can be pushed to the server or the cell store itself:
 
@@ -377,9 +377,9 @@ Concretely, the construction of the view can be pushed to the server or the cell
 \item given a spreadsheet definition (say, table link base), a hypercube can be generated in order to obtain all the relevant cells from the underlying cell store.
 \end{itemize}
 
-It is also still possible for a business user to obtain the materialised hypercube from the cell store, and to import it as is in their spreadsheet software.
+It is also still possible for a business user to obtain the materialized hypercube from the cell store, and to import it as is in their spreadsheet software.
 
-As is commonly done in spreadsheets, business users can drag and drop dimensions across the different categories to fine tune their view over the data. Spreadsheet views are not only convenient to read, but also to write data back to the cell store, cell by cell. Compared to the cell gas and the solid materialised hypercube, the spreadsheet view is comparable to a metal that gets melted before the blacksmith can shape it at will.
+As is commonly done in spreadsheets, business users can drag and drop dimensions across the different categories to fine tune their view over the data. Spreadsheet views are not only convenient to read, but also to write data back to the cell store, cell by cell. Compared to the cell gas and the solid materialized hypercube, the spreadsheet view is comparable to a metal that gets melted before the blacksmith can shape it at will.
 
 Hence, because cell stores can use all the experience accumulated over several decades on pivot tables from the spreadsheet industry, they offer a very powerful and business friendly interface, shielding users from the underlying dimensional complexity.
 
@@ -393,7 +393,7 @@ To a business user, working with a cell store feels like working on a spreadshee
 
 \begin{figure*}
 \centering
-\caption{A spreadsheet view over a hypercube, for viewing and editing data without IT knowledge. The display style used here is done in the spirit of XBRL table linkbases. In this case, concepts are put on rows and the other dimensions on filters or on columns. The spreadsheet front end can support drag-and-drop, allowing the user to interactively rearrange rows, columns and filters.}
+\caption{A spreadsheet view over a hypercube, for viewing and editing data without IT knowledge. The display style used here is done in the spirit of XBRL table link bases. In this case, concepts are put on rows and the other dimensions on filters or on columns. The spreadsheet front end can support drag-and-drop, allowing the user to interactively rearrange rows, columns and filters.}
 \label{fig-spreadsheet}
 \vspace{3mm}
 \begin{tabular}{|l||c|c|c|c|c|c|}
@@ -441,7 +441,7 @@ From a high-level perspective, cell stores support two kinds of rules:
 
 \begin{description}
 \item[Imputation] rules computes a value for a missing cell (i.e., dimensional coordinates against which no value was reported). When generated, this cell comes along with an audit trail that indicates how the value was computed, and from which other cells.
-\item[Validation] rules check that the value for a given cell is consistent with the values reported in other cells (often neighbours in the spreadsheet view). A validation rule typically results in a green tick or a red cross in the corresponding cell on the spreadsheet view.
+\item[Validation] rules check that the value for a given cell is consistent with the values reported in other cells (often neighbors in the spreadsheet view). A validation rule typically results in a green tick or a red cross in the corresponding cell on the spreadsheet view.
 \end{description}
 
 Rules can be defined according to several metapatterns, as defined by Charles Hoffman. It is most intuitive to think about them having in mind the spreadsheet view.
@@ -456,7 +456,7 @@ Rules can be defined according to several metapatterns, as defined by Charles Ho
 \item [Grid] This metapattern involves the conjunction of two other metapatterns, for example, in the spreadsheet view, a Roll Up on the rows and a Compound Fact on the columns.
 \end{description}
 
-To facilitate the definition of rules, concepts and dimension values are organised in hierarchies. For example, a roll up is typically a parent's being the sum of its children.
+To facilitate the definition of rules, concepts and dimension values are organized in hierarchies. For example, a roll up is typically a parent's being the sum of its children.
 
 \section{Canonical mapping to the relational model}
 \label{section-relational-mapping}
@@ -507,7 +507,7 @@ Many ideas behind the cell store paradigm originate from the XBRL standard \cite
 
 XBRL is very complex and involves many different specifications.
 
-XBRL, on the physical level, uses XML technologies: filings are reported with a (flat) XML format, and metadata (called taxonomies) using XML Schema and XML Linkbases.
+XBRL, on the physical level, uses XML technologies: filings are reported with a (flat) XML format, and metadata (called taxonomies) using XML Schema and XML Link bases.
 
 The counterpart of a cell is called a fact. A numeric fact may also be stamped with information on the precision or the number of decimals.
 
@@ -515,12 +515,12 @@ In XBRL, dimensions are called aspects. There are three ``builtin'' aspects in a
 
 Taxonomies define concepts, hypercubes, dimensions, dimension values, can be shared at any level (reporting authority, company, department, etc) and extended at will.
 
-XBRL Linkbases provide metadata information in the form of ``networks'', among which:
+XBRL Link bases provide metadata information in the form of ``networks'', among which:
 
 \begin{description}
 \item[Definition] networks allow, among others, building hypercubes and specifying which concepts are bound to which hypercubes, which hypercubes have which dimensions, and which dimensions have which values. Dimensions may either have a typed value space, or be an explicitly enumerated set. 
-\item[Presentation] networks allow the hierarchisation of concepts and dimension values in a spreadsheet view (=Table link base in XBRL). For example, a balance sheet may be divided into an Assets hierarchy and an EquityAndLiabilities hierarchy. A presentation network can also contain abstract concepts, i.e., they are only here to organise and partition other concepts. 
-\item[Table linkbase] networks define how a spreadsheet view looks like, i.e., which are the slicers, the dicers, how the dicers are organised in rows and columns, etc.
+\item[Presentation] networks allow the hierarchization of concepts and dimension values in a spreadsheet view (=Table link base in XBRL). For example, a balance sheet may be divided into an Assets hierarchy and an EquityAndLiabilities hierarchy. A presentation network can also contain abstract concepts, i.e., they are only here to organize and partition other concepts. 
+\item[Table link base] networks define how a spreadsheet view looks like, i.e., which are the slicers, the dicers, how the dicers are organized in rows and columns, etc.
 \item[Calculation] networks are the simplest kind of roll up rules.
 \item[Label] networks associate business-friendly labels to concepts, dimensions and dimension values, because the latter are often stored in a very raw form that is not palatable to non IT-savvy users.
 \item[Formula] networks define rules to automatically impute or validate fact values.
@@ -571,7 +571,7 @@ Rather, dimensions could be set up as non-primary-key columns, using a UUID prim
 
 \subsection{On top of a key-value store}
 
-The data in a cell store could be stored in a key-value store, possibly in an optimized format for retrieval and for saving space. However, document stores are more suitable for the storage of metadata, as tree structures are still quite useful for modelling business taxonomies.
+The data in a cell store could be stored in a key-value store, possibly in an optimized format for retrieval and for saving space. However, document stores are more suitable for the storage of metadata, as tree structures are still quite useful for modeling business taxonomies.
 
 \subsection{On top of a graph database}
 
