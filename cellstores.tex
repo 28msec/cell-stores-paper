@@ -190,9 +190,9 @@ After cells, the next most important construct is the hypercube. In the cell sto
 
 \subsubsection{Point queries and indices}
 
-Now that we have a cell of gas available, we can begin to play with it. The first idea that comes to mind is how to retrieve a cell from the gas (point query).
+Now that we have a gas of cells available, we can begin to play with it. The first idea that comes to mind is how to retrieve a cell from the gas (point query).
 
-Point queries leverage the index capabilities of the underlying storage layer. If the cell gas is small and contains many concepts, a single hash index on the \emph{concept} dimension will be enough. For bigger cell gas, other techniques allow scaling up, such as:
+Point queries leverage the index capabilities of the underlying storage layer. If the cell gas is small and contains many concepts, a single hash index on the \emph{concept} dimension will be enough. For bigger cell gases, other techniques allow scaling up, such as:
 \begin{itemize}
 \item compound keys: a single index on several dimensions such as \emph{concept}, \emph{period} and \emph{entity}.
 \item separate hash keys: use single indices separately, and compute their intersection.
