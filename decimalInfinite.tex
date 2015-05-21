@@ -55,37 +55,217 @@ Finally, we give a few hints on how the encoding can be fine-tuned to specific n
 
 \subsection{Natural encoding}
 
+Positive integers have a natural encoding which is simply their representation in base 2, as shown on figure \ref{figure-natural-encoding}.
+
+\begin{figure}
+\caption{Natural encoding of an integer (base 2)}
+\label{figure-natural-encoding}
+\center
+\begin{tabular}{|l|l|}
+\hline
+1 & 1 \\
+\hline
+10 & 2 \\
+\hline
+11 & 3 \\
+\hline
+100 & 4 \\
+\hline
+101 & 5 \\
+\hline
+... & ... \\
+\hline
+\end{tabular}
+\end{figure}
+
+\begin{figure}
+\caption{Natural encoding of an integer (base 2, padded to 4 bits), which is order preserving}
+\label{figure-natural-encoding-padded}
+\center
+\begin{tabular}{|l|l|}
+\hline
+0001 & 1 \\
+\hline
+0010 & 2 \\
+\hline
+0011 & 3 \\
+\hline
+0100 & 4 \\
+\hline
+0101 & 5 \\
+\hline
+... & ... \\
+\hline
+\end{tabular}
+\end{figure}
+
+It supports an unlimited range, however is not order-preserving.
+
+If however the range is limited, for example to 8, 16, 32 or 64 bits, as is commonly done in most programming languages, and the encodings are padded with leading 0s, then this encoding becomes order-preserving.
+
 \subsection{Signed Integers}
 
-\subsection{IEEE float and double encoding}
+Signed integers are commonly stored by encoding the sign in the first bit, meaning that positive integers (beginning with a 0, which is half the range) are stored in the same way as the unsigned encoding, while negative integers are stored beginning with a 1. Lexicographical order is only preserved for positive integers, for negative integers, but not overall.
+
+\begin{figure}
+\caption{Natural encoding of a signed integers (base 2, padded to 4 bits)}
+\label{figure-natural-encoding-padded}
+\center
+\begin{tabular}{|l|l|}
+\hline
+1101 & -3 \\
+\hline
+1110 & -2 \\
+\hline
+1111 & -1 \\
+\hline
+0000 & 0 \\
+\hline
+0001 & 1 \\
+\hline
+0010 & 2 \\
+\hline
+0011 & 3 \\
+\hline
+0100 & 4 \\
+\hline
+0101 & 5 \\
+\hline
+... & ... \\
+\hline
+\end{tabular}
+\end{figure}
 
 \subsection{Elias Gamma Code}
 
- Gamma codes are used to encode infinite-range exponents.
- 
-This encoding unifies previous works and solves the general problem of order preserving for the entire decimal range.
+Gamma codes are a variable length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix-free, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
 
-The Elias gamma code solves the infinite-range order-preserving issue for integers only. US Patent 7685214 solves the order-preserving issue for finite-range decimals only.
+\begin{figure}
+\caption{The Gamma Code for the first non-negative integers}
+\label{figure-gamma-encoding}
+\center
+\begin{tabular}{|l|l|}
+\hline
+1 & 0 \\
+\hline
+01 0 & 1 \\
+\hline
+01 1 & 2 \\
+\hline
+001 00 & 3 \\
+\hline
+001 01 & 4 \\
+\hline
+001 10 & 5 \\
+\hline
+... & ... \\
+\hline
+\end{tabular}
+\end{figure}
 
-None of the Elias gamma code or the US Patent 7685214 supports infinite-range decimals.
+ The main idea is that a first sequence of 0s, terminated by a 1, encodes the length of the binary-representation of the integer. Then, the natural binary representation of the integer, without its leading 1, follows.
 
-This invention unifies the Elias gamma code approach to encode exponents, and the US Patent 7685214 approach to encode the sign, exponent and mantissa separately, the mantissa being encoded in declets.
+Since the number of 0s is identical to the number of digits that follow after the 1, it is possible to unambiguously deduct where the encoding stops from the number of leading 0s.
+
+For example, 00110010 can be unambiguously separated into 00110 (5) and 010 (1).
+
+The Gamma code in its original form is not order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown on Figure \ref{figure-gamma-encoding-tweaked}
+
+\begin{figure}
+\caption{A slight modification of the Gamma Code that makes it order-preserving}
+\label{figure-gamma-encoding-tweaked}
+\center
+\begin{tabular}{|l|l|}
+\hline
+0 & 0 \\
+\hline
+10 0 & 1 \\
+\hline
+10 1 & 2 \\
+\hline
+110 00 & 3 \\
+\hline
+110 01 & 4 \\
+\hline
+110 10 & 5 \\
+\hline
+... & ... \\
+\hline
+\end{tabular}
+\end{figure}
+
+
+\subsection{IEEE float and double encoding}
+
+The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the mantissa is encoded.
 
 \subsection{IBM Patent}
-
-
-\section{Summary}
-
-The invention provides an algorithm (6) for encoding a decimal into a variable-length representation. This algorithm works by writing the decimal in a normal form (1), splitting the normal form into 4 components (2), encoding each of these components separately: sign (3), exponent and its sign (4), significand (5), and finally concatenating the encodings. The lexicographical ordering of the binary encodings corresponds to the natural ordering of the underlying decimals (9). A decoding algorithm (7) retrieves the encoded decimal from its encoding. Finally, special values such as -0, -INF and +INF are encoded separately (8), in a way that preserves their order relationship with other decimals. Nan is encoded separately as the lowest.
-
-Relationship Between the Components (continued)
+The US Patent 7685214 (``Order-preserving encoding formats of floating-point decimal numbers for efficient value comparison'') , filed by IBM, solves the order-preserving issue, but with a finite-length encoding, which implies that it supports a finite range of decimals only.
 
 \section{Encoding}
 
+Let us now get into the details of the encoding itself. The general idea is any non-zero decimal can be expressed in a canonical scientific form with four components (sign, exponent sign, exponent, mantissa). These four components can be encoded separately and concatenated. Since each of the components is encoded prefix-free, it can be unambiguously decoded again.
+
+\subsection{Encoding of zero}
+
+Zero is handled separately and encoded as $10$.
+
+\subsection{Canonical decomposition}
+
+Any decimal number, except zero, can be expressed uniquely in scientific notation as in commonly done in literature, that is, in the form
+
+$$s\times m \times10^{t\times e}$$
+
+where:
+
+\begin{itemize}
+\item The overall sign is $s\in \{-1, 1\}$.
+\item The exponent $e\in \mathbb{N}$ is a non-negative integer (which is the absolute value of the logarithm in base ten of the original number rounded down to the next integer).
+\item The exponent sign is $t\in \{-1, 1\}$.
+\item The mantissa (significand) is $m\in [1,10)$, a real number between 1 (included) and 10 (excluded).
+\end{itemize}
+
+If S denotes the encoding s, T that of t and so on, then the overall encoding comes naturally as STEM as shown on figure \ref{figure-overall-encoding}. This is because decimal numbers in scientific notation can be sorted with the following criteria in this order:
+\begin{enumerate}
+\item sign
+\item exponent sign
+\item exponent
+\item mantissa
+\end{enumerate}
+
+\begin{figure}
+\caption{Encoding of an overall decimal in scientific notation $s\times m \times10^{t\times e}$}
+\label{figure-overall-encoding}
+\center
+\begin{tabular}{|l|l|l|l|}
+\hline
+$S$ & $T$ & $E$ & $M$ \\
+\hline
+\end{tabular}
+\end{figure}
+
 \subsection{Encoding the sign}
 
-00 corresponds to a - sign
-10 corresponds to a + sign
+The sign of a decimal is encoded on two bits as shown on Figure \ref{figure-sign}
+
+\begin{figure}
+\caption{Encoding of the overall decimal sign}
+\label{figure-sign}
+\center
+\begin{tabular}{|l|l|}
+\hline
+S & Sign s \\
+\hline
+00 &  negative sign ($s=-1$, e.g., $-4.3\times10^3$)\\
+\hline
+10 & positive sign ($s=1$, e.g., $4.3\times10^3$)\\
+\hline
+\end{tabular}
+\end{figure}
+
+Since, zero is simply encoded with $10$ with no further bits, it is already apparent that its encoding appears lexicographically after the encoding of any negative decimal, and before the encoding of any positive decimal.
+
+The reason for using two bits rather than just one is that negative infinity (-INF), positive infinity (+INF) as well as negative zero and NaN can be conveniently encoded as well (see Figure \ref{figure-sign-extended}).
 
 \subsection{Encoding the exponent}
 \begin{enumerate}
@@ -157,6 +337,30 @@ The encoding are designed in such a way that, if a < b, then the encoded a (A) c
 6. +INF is encoded as 11 and comes lexicographically after any encoding of an finite decimal
 
 \section{Fine-tuning the encoding scheme}
+
+\begin{figure}
+\caption{Encoding of the overall decimal sign}
+\label{figure-sign-extended}
+\center
+\begin{tabular}{|l|l|}
+\hline
+0 & NaN \\
+\hline
+00 & -INF \\
+\hline
+00... &  negative sign (e.g., $-4.3\times10^3$)\\
+\hline
+01 & negative zero \\
+\hline
+10 & positive zero \\
+\hline
+10... & positive sign (e.g., $4.3\times10^3$)\\
+\hline
+11 & +INF \\
+\hline
+\end{tabular}
+\end{figure}
+
 
 Everything is necessary, except the encoding of -INF, +INF, Nan which are optional. Also, trailing 0s can be removed from the binary encoding and added back while decoding. Finally, in environments where lexicographical encoding is not supported between different lengths, this encoding can be adapted to work at the cost of limiting the range.
 A prefix of the binary encoding can be taken as an approximation of the encoded decimal, possibly padded with leading 0s if too short. This works as long as the total stored lengths exceeds the length of the encoding of the sign and exponent, which limits the range.
