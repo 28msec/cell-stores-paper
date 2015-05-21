@@ -38,13 +38,13 @@ In the modern database era, notably document stores, syntaxes such as XML and JS
 
 The difference with scientific software, though, is that there is more to it than performing computations. These numbers need to be efficiently stored and retrieved, but most importantly, this must be done in such a way that they can be indexed. For efficiency reasons, it is desirable that this comparison can be done without decoding them. While this is trivial for hash indices, it becomes more difficult for range indices. Indeed, the lexicographical order of encoded values must correspond to the ordering of the corresponding numbers.
 
-State-of-the-art databases, still, do not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers).
+To the extent of our knowledge and our investigations, state-of-the-art databases, still, do not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously.
 
 This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries, on a MongoDB data store.
 
 \subsection{Outline of the encoding}
 
-The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand. These four components are encoded in turn and in this order.
+The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (mantissa). These four components are encoded in turn and in this order.
 
 Section \ref{section-related-work} gives an overview of the integer and decimal encoding landscape.
 TODO
@@ -63,15 +63,17 @@ Positive integers have a natural encoding which is simply their representation i
 \center
 \begin{tabular}{|l|l|}
 \hline
+Integer & Binary representation \\
+\hline
 1 & 1 \\
 \hline
-10 & 2 \\
+2 & 10 \\
 \hline
-11 & 3 \\
+3 & 11 \\
 \hline
-100 & 4 \\
+4 & 100  \\
 \hline
-101 & 5 \\
+5 & 101  \\
 \hline
 ... & ... \\
 \hline
@@ -84,15 +86,17 @@ Positive integers have a natural encoding which is simply their representation i
 \center
 \begin{tabular}{|l|l|}
 \hline
-0001 & 1 \\
+Integer & Binary representation (padded with 0s) \\
 \hline
-0010 & 2 \\
+1 & 0001 \\
 \hline
-0011 & 3 \\
+2 & 0010 \\
 \hline
-0100 & 4 \\
+3 & 0011 \\
 \hline
-0101 & 5 \\
+4 & 0100 \\
+\hline
+5 & 0101 \\
 \hline
 ... & ... \\
 \hline
@@ -113,23 +117,21 @@ Signed integers are commonly stored by encoding the sign in the first bit, meani
 \center
 \begin{tabular}{|l|l|}
 \hline
-1101 & -3 \\
+Integer & Signed binary representation \\
 \hline
-1110 & -2 \\
+-3 & 1101 \\
 \hline
-1111 & -1 \\
+-2 & 1110 \\
 \hline
-0000 & 0 \\
+-1 & 1111 \\
 \hline
-0001 & 1 \\
+0 & 0000 \\
 \hline
-0010 & 2 \\
+1 & 0001 \\
 \hline
-0011 & 3 \\
+2 & 0010 \\
 \hline
-0100 & 4 \\
-\hline
-0101 & 5 \\
+3 & 0011 \\
 \hline
 ... & ... \\
 \hline
@@ -137,6 +139,7 @@ Signed integers are commonly stored by encoding the sign in the first bit, meani
 \end{figure}
 
 \subsection{Elias Gamma Code}
+\label{section-gamma-code}
 
 Gamma codes are a variable length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix-free, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
 
@@ -144,32 +147,34 @@ Gamma codes are a variable length encoding that supports the entire non-negative
 \caption{The Gamma Code for the first non-negative integers}
 \label{figure-gamma-encoding}
 \center
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|l|l|}
 \hline
-1 & 0 \\
+Integer & Offset integer & Gamma \\
 \hline
-01 0 & 1 \\
+0 & 1 (1) & 1 \\
 \hline
-01 1 & 2 \\
+1 & 2 (10) & 01 0  \\
 \hline
-001 00 & 3 \\
+2 & 3 (11) & 01 1  \\
 \hline
-001 01 & 4 \\
+3 & 4 (100) & 001 00 \\
 \hline
-001 10 & 5 \\
+4 & 5 (101) & 001 01 \\
+\hline
+5 & 6 (110) & 001 10 \\
 \hline
 ... & ... \\
 \hline
 \end{tabular}
 \end{figure}
 
- The main idea is that a first sequence of 0s, terminated by a 1, encodes the length of the binary-representation of the integer. Then, the natural binary representation of the integer, without its leading 1, follows.
+ The main idea is that a first sequence of 0s, terminated by a 1, encodes the length of the binary-representation of the integer. Then, the natural binary representation of the integer (most of the time offset by 1), without its leading 1, follows.
 
 Since the number of 0s is identical to the number of digits that follow after the 1, it is possible to unambiguously deduct where the encoding stops from the number of leading 0s.
 
 For example, 00110010 can be unambiguously separated into 00110 (5) and 010 (1).
 
-The Gamma code in its original form is not order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown on Figure \ref{figure-gamma-encoding-tweaked}
+The Gamma code in its original form is order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown on Figure \ref{figure-gamma-encoding-tweaked}.
 
 \begin{figure}
 \caption{A slight modification of the Gamma Code that makes it order-preserving}
@@ -177,17 +182,19 @@ The Gamma code in its original form is not order preserving. However, simply inv
 \center
 \begin{tabular}{|l|l|}
 \hline
+Integer & Gamma (order-preserving) \\
+\hline
 0 & 0 \\
 \hline
-10 0 & 1 \\
+1 & 10 0  \\
 \hline
-10 1 & 2 \\
+2 & 10 1  \\
 \hline
-110 00 & 3 \\
+3 & 110 00 \\
 \hline
-110 01 & 4 \\
+4 & 110 01 \\
 \hline
-110 10 & 5 \\
+5 & 110 10 \\
 \hline
 ... & ... \\
 \hline
@@ -201,6 +208,8 @@ The IEEE 754 standard specifies a couple of standard, floating-point encoding fo
 
 \subsection{IBM Patent}
 The US Patent 7685214 (``Order-preserving encoding formats of floating-point decimal numbers for efficient value comparison'') , filed by IBM, solves the order-preserving issue, but with a finite-length encoding, which implies that it supports a finite range of decimals only.
+
+One very interesting idea in this approach is that, if the sign is negative, the mantissa m is encoded as 10-m to preserve the order.
 
 \section{Encoding}
 
@@ -244,6 +253,17 @@ $S$ & $T$ & $E$ & $M$ \\
 \end{tabular}
 \end{figure}
 
+Throughout this paper, four examples, which cover various combinations of the four components, will be used:
+
+$$-103.2 = - 1.032 \times 10^2$$
+
+$$-0.0405 = -4.05 \times 10^{-2}$$
+
+$$0.707106 = 7.07106 \times 10^{-1}$$
+
+$$4005012345 = 4.005012345 \times 10^9$$
+
+
 \subsection{Encoding the sign}
 
 The sign of a decimal is encoded on two bits as shown on Figure \ref{figure-sign}
@@ -267,23 +287,164 @@ Since, zero is simply encoded with $10$ with no further bits, it is already appa
 
 The reason for using two bits rather than just one is that negative infinity (-INF), positive infinity (+INF) as well as negative zero and NaN can be conveniently encoded as well (see Figure \ref{figure-sign-extended}).
 
+So far, our four example have an encoding that begins as follow:
+
+\begin{tabular}{l|l}
+$- 1.032 \times 10^2$ & 00... \\
+
+$-4.05 \times 10^{-2}$ & 00... \\
+
+$0$ & 10 \\
+
+$7.07106 \times 10^{-1}$ & 10... \\
+
+$4.005012345 \times 10^9$ & 10...\\
+\end{tabular}
+\subsection{Encoding the exponent sign}
+
+The exponent sign is encoded by either negating or not negating all bits in the encoding of the absolute value of the exponent (Section \ref{section-exponent-encoding}), in such a way that the third bit be a 0 or a 1 as shown on figure \ref{figure-exponent-sign}.
+
+\begin{figure}
+\caption{Encoding of the exponent sign}
+\label{figure-exponent-sign}
+\center
+\begin{tabular}{|l|l|}
+\hline
+S and T & s and t \\
+\hline
+00 0 &  negative sign, positive exponent sign\\
+\hline
+00 1 &  negative sign, negative exponent sign\\
+\hline
+10 0 & positive sign, negative exponent sign\\
+\hline
+10 1 & positive sign, positive exponent sign\\
+\hline
+\end{tabular}
+\end{figure}
+
+The encoding of our four examples continues as follows:
+
+\begin{tabular}{l|l}
+$- 1.032 \times 10^2$ & 00 0... \\
+
+$-4.05 \times 10^{-2}$ & 00 1... \\
+
+$7.07106 \times 10^{-1}$ & 10 0... \\
+
+$4.005012345 \times 10^9$ & 10 1...\\
+\end{tabular}
+
 \subsection{Encoding the exponent}
+
+The absolute value of the exponent is encoded with a modified gamma code (as explained in section \ref{section-gamma-code}), using an offset of 2.
+
+\label{section-exponent-encoding}
 \begin{enumerate}
-\item The exponent is offset by +2.
-\item  The exponent is written in a binary form.
-\item  Call N the number of its digits.
-\item  The first digit is replaced with N-1 ones, followed by a zero.
-\item  If the overall sign and the sign of its exponent are different, all digits are inverted (NOT).
+\item The exponent is offset by +2, for example, 4 is encoded with the modified gamma code of 6. 
+\item  The offset exponent is written in a binary form, for example, 6 is written 110.
+\item  Call N the number of its digits (in the case of 110: 3).
+\item  The first digit is replaced with N-1 ones, followed by a zero (in the case of 110: 110 10)
 \end{enumerate}
 
+Figure \ref{figure-exponent-encoding} shows how the smallest absolute values of the exponent are encoded. If the overall sign and the exponent sign are identical, this is how it appears in the final encoding. Otherwise, all the bits are negated.
+
+\begin{figure}
+\caption{A slight modification of the Gamma Code that makes it order-preserving}
+\label{figure-exponent-encoding}
+\center
+\begin{tabular}{|l|l|l|}
+\hline
+Integer & Integer offset by 2 & Exponent encoding\\
+\hline
+0 & 2 (10) & 10 0 \\
+\hline
+1 & 3 (11) & 10 1  \\
+\hline
+2 & 4 (100) & 110 00  \\
+\hline
+3 & 5 (101) & 110 01 \\
+\hline
+4 & 6 (110) & 110 10 \\
+\hline
+5 & 7 (111) & 110 11 \\
+\hline
+6 & 8 (1000) & 1110 000 \\
+\hline
+7 & 9 (1001) & 1110 001 \\
+\hline
+8 & 10 (1010) & 1110 010 \\
+\hline
+9 & 11 (1011) & 1110 011 \\
+\hline
+... & ... & ...\\
+\hline
+\end{tabular}
+\end{figure}
+
+The encoding of our four examples continues as follows:
+
+\begin{tabular}{l|l}
+$- 1.032 \times 10^2$ ($e=2$, opposite signs) & 00 001 11... \\
+
+$-4.05 \times 10^{-2}$ ($e=2$, same signs) & 00 110 00... \\
+
+$7.07106 \times 10^{-1}$ ($e=1$, opposite signs) & 10 01 0... \\
+
+$4.005012345 \times 10^9$ ($e=9$, same signs) & 10 1110 011...\\
+\end{tabular}
+
+
 \subsection{Encoding the significand}
-\begin{enumerate}
-\item If the sign of the decimal is negative, 10-S is encoded instead.
-\item Decomposition into one leading digit, followed by groups of 3 digits (declets) after the comma.
-\item Padding of the last declet with 0s to make sure it also has 3 digits.
-\item Encoding of the leading digit in 4 bits (natural binary representation).
-\item Encoding of each declet in 10 bits (natural binary representation).
-\end{enumerate}
+
+The mantissa is encoded in a way similar to decimal32, decimal64 and decimal128, that is:
+
+\begin{itemize}
+\item its initial digit (before the comma) is encoded on 4 bits in its natural binary representation.
+\item the remaining digits (after the comma) are grouped 3 by 3 (declets). Each declet is encoded in its natural binary representation on 10 bits. Trailing 0s are added to make sure that the last group also has 3 digits.
+\end{itemize}
+
+If the overall sign of the decimal is negative though, a trick similar to the IBM patent is used: 10-m is encoded instead of m (in this case, the leading digit may be a 0 and will never be a 9).
+
+\begin{figure}
+\caption{Examples of mantissa encodings}
+\label{figure-mantissa-encoding}
+\center
+\begin{tabular}{|l|l|l|l}
+\hline
+$8.968 (=10-1.023)$ & 8 968 & 1000 \\
+& & 1111001000 \\
+\hline
+$5.95 (=10-4.05)$ & 5 950 & 0101 \\
+& & 1110110110\\
+\hline
+$7.07106$ & 7 071 060 & 0111 \\
+& & 0001000111\\
+& & 0001111000\\
+\hline
+$4.005012345$ & 4 005 012 345 & 0100 \\
+& & 0000000101\\
+& & 0000001100\\
+& & 0101011001\\
+\hline
+\end{tabular}
+\end{figure}
+
+The encoding of our four examples can now be completed:
+
+\begin{tabular}{l}
+$- 1.032 \times 10^2$ (10-m is taken)\\
+00 001 11 1000 1111001000\\
+\\
+$-4.05 \times 10^{-2}$ (10-m is taken)\\
+00 110 00 0101 1110110110\\
+\\
+$7.07106 \times 10^{-1}$\\
+10 01 0 0111 0001000111 0001111000\\
+\\
+$4.005012345 \times 10^9$\\
+10 1110 011 0100 0000000101 0000001100 0101011001\\
+\end{tabular}
 
 \section{Decoding}
 
