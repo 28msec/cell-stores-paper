@@ -22,7 +22,7 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-This paper introduces a binary encoding that supports arbitrarily large, small and precise decimals. It completely preserves information and order, and finally does not rely on any arbitrary use-cased-based choice of calibration.
+This paper introduces a binary encoding that supports arbitrarily large, small and precise decimals. It completely preserves information and order. It does not rely on any arbitrary use-cased-based choice of calibration and is readily implementable and usable, as is. Finally, it is also simple to explain and understand.
 \end{abstract}
 
 \section{introduction}
@@ -38,7 +38,9 @@ In the modern database era, notably document stores, syntaxes such as XML \cite{
 
 The difference with scientific software, though, is that there is more to it than performing computations. These numbers need to be efficiently stored and retrieved, but most importantly, this must be done in such a way that they can be indexed. For efficiency reasons, it is desirable that this comparison can be done without decoding them. While this is trivial for hash indices, it becomes more difficult for range indices. Indeed, the lexicographical order of encoded values must correspond to the ordering of the corresponding numbers.
 
-To the extent of our knowledge and our investigations, state-of-the-art databases, still, do not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously.
+When decimalInfinite was designed, to the extent of our knowledge and our investigations, state-of-the-art databases did not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings existed that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously. In particular, none of the separate schemes used are new: decimalInfinite is only original in the way it puts them all together.
+
+More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals.
 
 This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store.
 
@@ -218,6 +220,7 @@ The US Patent 7685214 (``Order-preserving encoding formats of floating-point dec
 One very interesting idea in this approach is that, if the sign is negative, the mantissa m is encoded as 10-m to preserve the order.
 
 \subsection{The Rishe Encoding}
+\label{section-rishe}
 
 The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on the arbitrary choice of 128 intervals based on the use case. decimalInfinite does not rely on such a choice and scales up regardless of how large, small or precise decimals are.
 
