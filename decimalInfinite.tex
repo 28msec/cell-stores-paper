@@ -22,33 +22,36 @@ Ghislain Fourny\\
 \maketitle
 
 \begin{abstract}
-Yes, all of them.
+This paper introduces a binary encoding that supports arbitrarily large, small and precise decimals. It completely preserves information and order, and finally does not rely on any arbitrary use-cased-based choice of calibration.
 \end{abstract}
 
 \section{introduction}
 In the early stages of computers, storage was scarce. And it was even scarcer in the processor itself. The first computers supported basic arithmetic operations on 8-bit integers. As more memory was needed, the size of the registers in the processor architecture was increased to successively 16 bits, 32 bits and very recently to 64 bits.
 
-While this was mostly driven by the size of the memory, which never failed to exceed the maximum value space at some point, this is also had an impact on the size of integers and decimals processed. This is simply because, in the Von-Neumann architecture, registers are both used to store memory addresses and numbers.
+While this was mostly driven by the size of the memory, which never failed to exceed the maximum value space at some point, this also had an impact on the size of integers and decimals processed. This is simply because, in the Von-Neumann architecture \cite{VonNeumann1946}, registers are both used to store memory addresses and numbers.
 
 The numbers used in programs are of two main kinds: integers and decimals. Integers are typically supported within a complete interval such as $- 2^{31}$ to $2^{31} -1$. In the case of decimals, it is a bit more complicated. They are limited both in range (driven by the size of their exponent) and in their precision.
 
-For scientists that need to use bigger numbers and/or more precision, special libraries are available, and domain-specific software such as Maple, Mathematica or Matlab make it possible to overcome the limitations of processors and shield the user from the complex machinery that is required to have the processor perform the computations.
+For scientists that need to use bigger numbers and/or more precision, special libraries are available, and domain-specific software such as Maple \cite{MAPLE}, Mathematica \cite{MATHEMATICA} or Matlab \cite{MATLAB} make it possible to overcome the limitations of processors and shield the user from the complex machinery that is required to have the processor perform the computations.
 
-In the modern database era, notably document stores, syntaxes such as XML and JSON, but also their data models and the associated query languages, do not impose any limitation on integers or decimals: on the logical level, the entire value space is covered and the limit is only the size of the available storage.
+In the modern database era, notably document stores, syntaxes such as XML \cite{XML} and JSON \cite{JSON}, but also their data models and the associated query languages, do not impose any limitation on integers or decimals: on the logical level, the entire value space is covered and the limit is only the size of the available storage.
 
 The difference with scientific software, though, is that there is more to it than performing computations. These numbers need to be efficiently stored and retrieved, but most importantly, this must be done in such a way that they can be indexed. For efficiency reasons, it is desirable that this comparison can be done without decoding them. While this is trivial for hash indices, it becomes more difficult for range indices. Indeed, the lexicographical order of encoded values must correspond to the ordering of the corresponding numbers.
 
 To the extent of our knowledge and our investigations, state-of-the-art databases, still, do not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously.
 
-This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries, on a MongoDB data store.
+This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store.
 
 \subsection{Outline of the encoding}
 
 The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (mantissa). These four components are encoded in turn and in this order.
 
 Section \ref{section-related-work} gives an overview of the integer and decimal encoding landscape.
-TODO
-Finally, we give a few hints on how the encoding can be fine-tuned to specific needs, such as also supporting special values such as negative 0, NaN, and infinity.
+Section \ref{section-encoding} gives the algorithm for encoding decimals in the decimalInfinite format.
+Section \ref{section-decoding} gives the decoding algorithm.
+Section \ref{section-proof} gives a detailed proof of the main property of decimalInfinite (that it's order preserving).
+Section \ref{section-fine-tune} shows how the core of the encoding can be extended to special numbers (NaN, infinity, etc).
+Section \ref{section-complexity} briefly summarizes complexity aspects.
 
 \section{Related work}
 \label{section-related-work}
@@ -113,7 +116,7 @@ Signed integers are commonly stored by encoding the sign in the first bit, meani
 
 \begin{figure}
 \caption{Natural encoding of a signed integers (base 2, padded to 4 bits)}
-\label{figure-natural-encoding-padded}
+\label{figure-natural-signed-encoding}
 \center
 \begin{tabular}{|l|l|}
 \hline
@@ -141,7 +144,7 @@ Integer & Signed binary representation \\
 \subsection{Elias Gamma Code}
 \label{section-gamma-code}
 
-Gamma codes are a variable length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix-free, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
+Gamma codes are a variable length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
 
 \begin{figure}
 \caption{The Gamma Code for the first non-negative integers}
@@ -201,19 +204,26 @@ Integer & Gamma (order-preserving) \\
 \end{tabular}
 \end{figure}
 
+\subsection{BCD, Chen-Ho, DPD}
+
+The Binary-coded decimal encoding (BCD) encodes digits encodes decimal numbers by encoding each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits. It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations, however does not preserve order. The Densely packed decimal encoding \cite{DPD} is an improvement upon the ChenHo encoding.
 
 \subsection{IEEE float and double encoding}
 
-The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the mantissa is encoded.
+The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the mantissa is encoded. These encodings rely on DPD.
 
 \subsection{IBM Patent}
 The US Patent 7685214 (``Order-preserving encoding formats of floating-point decimal numbers for efficient value comparison'') , filed by IBM, solves the order-preserving issue, but with a finite-length encoding, which implies that it supports a finite range of decimals only.
 
 One very interesting idea in this approach is that, if the sign is negative, the mantissa m is encoded as 10-m to preserve the order.
 
-\section{Encoding}
+\subsection{The Rishe Encoding}
 
-Let us now get into the details of the encoding itself. The general idea is any non-zero decimal can be expressed in a canonical scientific form with four components (sign, exponent sign, exponent, mantissa). These four components can be encoded separately and concatenated. Since each of the components is encoded prefix-free, it can be unambiguously decoded again.
+The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on the arbitrary choice of 128 intervals based on the use case. decimalInfinite does not rely on such a choice and scales up regardless of how large, small or precise decimals are.
+
+\section{Encoding}
+\label{section-encoding}
+Let us now get into the details of the encoding itself. The general idea is any non-zero decimal can be expressed in a canonical scientific form with four components (sign, exponent sign, exponent, mantissa). These four components can be encoded separately and concatenated. Since each of the components (but the last one) is a prefix code, it can be unambiguously decoded again.
 
 \subsection{Encoding of zero}
 
@@ -447,6 +457,7 @@ $4.005012345 \times 10^9$\\
 \end{tabular}
 
 \section{Decoding}
+\label{section-decoding}
 
 Decoding is also performed from left to right, in a way similar to encoding.
 
@@ -469,7 +480,7 @@ The exponent sign can be deduced from the third bit, but depends on the overall 
 
 \subsubsection{Decoding the exponent}
 
-The exponent encoding, starting at the third bit, is of variable length. Since gamma codes are prefix-free though, determining the length of the exponent encoding is straight forward.
+The exponent encoding, starting at the third bit, is of variable length. Since gamma codes are prefix codes though, determining the length of the exponent encoding is straight forward.
 
 One starts at the third bit and, including it, counts the number of identical bits that follow. If there is a sequence of N identical bits (whether 0s or 1s) starting from the third bit, then the exponent is encoded on 2N+1 bits.
 
@@ -500,6 +511,7 @@ If the first group does not deliver a number comprised between 0 and 9, or a sub
 Finally, if the overall sign is negative, the complement to 10 is taken instead.
 
 \section{Why it is order-preserving}
+\label{section-proof}
 
 The encoding are designed in such a way that, if $a < b$, then the encoded $a$ ($A$) comes lexicographically before ($<<$) the encoded $b$ ($B$).
 
@@ -528,10 +540,11 @@ $a$'s (absolute) exponent is called $c$, $b$'s exponent is called $d$. $a$'s man
 \end{enumerate}
 
 \section{Fine-tuning the scheme}
+\label{section-fine-tune}
 
 \subsection{Special numbers}
 
-Special numbers such as positive and negative infinity, negative zero can also be encoded in such a way that the lexicographical order still holds, as shown on figure \ref{figure-sign-extended}. NaN can also be encoded (even if the order does not apply in this case).
+Special numbers such as positive and negative infinity, negative zero can also be encoded in such a way that the lexicographic order still holds, as shown on figure \ref{figure-sign-extended}. NaN can also be encoded (even if the order does not apply in this case).
 
 \begin{figure}
 \caption{Adding special numbers}
@@ -562,14 +575,14 @@ To save space, trailing 0s can be removed from the binary encoding and added bac
 
 \subsection{Fix-length variant}
 
-In environments where lexicographical encoding is not supported across different lengths (this is the case with MongoDB's ordering of binaries), this encoding can be adapted to work at the cost of limiting the range.
+In environments where encoding preserving lexicographic order is not supported across different lengths (this is the case with MongoDB's ordering of binaries), this encoding can be adapted to work at the cost of limiting the range.
 A prefix of the binary encoding can be taken as an approximation of the encoded decimal, possibly padded with leading 0s if too short. This works as long as the total stored lengths exceeds the length of the encoding of the sign and exponent, which limits the range.
 
 \section{Complexity}
-
+\label{section-complexity}
 The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the mantissa, and linear in the logarithm of the exponent, that is, in the logarithm of the logarithm of the decimal.
 
-The encoding of the mantissa uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using a prefix-free Gamma encoding.
+The encoding of the mantissa uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code.
 
 \section{Conclusion}
 
@@ -586,5 +599,8 @@ The code has been running with no known issues on production servers since 2012.
 
 \section{Acknowledgements}
 decimalInfinite was implemented on the 28msec platform with the help of Matthias Brantner and Till Westmann.
+
+\bibliographystyle{abbrv}
+\bibliography{decimalinfinite}
 
 \end{document}
