@@ -44,9 +44,7 @@ More recently, we became aware of the Rishe encoding (Section \ref{section-rishe
 
 This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store.
 
-\subsection{Outline of the encoding}
-
-The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (mantissa). These four components are encoded in turn and in this order.
+The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (also called mantissa by Von Neumann, although, as is common practice, we prefer to avoid this terminology because of its different meaning for logarithm computation). These four components are encoded in turn and in this order.
 
 Section \ref{section-related-work} gives an overview of the integer and decimal encoding landscape.
 Section \ref{section-encoding} gives the algorithm for encoding decimals in the decimalInfinite format.
@@ -56,6 +54,9 @@ Section \ref{section-fine-tune} shows how the core of the encoding can be extend
 Section \ref{section-complexity} briefly summarizes complexity aspects.
 
 \section{Related work}
+
+There are various encodings of integers and decimals commonly used in practice and found in literature.
+
 \label{section-related-work}
 
 \subsection{Natural encoding}
@@ -208,25 +209,59 @@ Integer & Gamma (order-preserving) \\
 
 \subsection{BCD, Chen-Ho, DPD}
 
-The Binary-coded decimal encoding (BCD) encodes digits encodes decimal numbers by encoding each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits. It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations, however does not preserve order. The Densely packed decimal encoding \cite{DPD} is an improvement upon the ChenHo encoding.
+Regardless of whether decimals are stored in fixed point format or in floating point format, the sequence of its significant digits needs to be encoded.
+
+The Binary-coded decimal encoding (BCD) encodes each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits (declets). It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations, however does not preserve order. The Densely packed decimal encoding \cite{DPD} is an improvement upon the ChenHo encoding.
 
 \subsection{IEEE float and double encoding}
 
-The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the mantissa is encoded. These encodings rely on DPD.
+The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the significand is encoded. These encodings rely on DPD.
 
 \subsection{IBM Patent}
 The US Patent 7685214 (``Order-preserving encoding formats of floating-point decimal numbers for efficient value comparison'') , filed by IBM, solves the order-preserving issue, but with a finite-length encoding, which implies that it supports a finite range of decimals only.
 
-One very interesting idea in this approach is that, if the sign is negative, the mantissa m is encoded as 10-m to preserve the order.
+One very interesting idea in this approach is that, if the sign is negative, the significand m is encoded as 10-m to preserve the order.
 
 \subsection{The Rishe Encoding}
 \label{section-rishe}
 
 The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on the arbitrary choice of 128 intervals based on the use case. decimalInfinite does not rely on such a choice and scales up regardless of how large, small or precise decimals are.
 
+\section{Ordering sequences of bits}
+
+There are two widespread ways of sorting sequences of bits, as shown on Figure \ref{figure-orders}. The first one, pseudo-lexicographic, first orders by size, and then within a size, lexicographically. The second one, regardless of the size, compares the bits from the left to the right, with the convention that, when a sequence is a prefix of another, the shorter one comes first.
+
+\begin{figure}
+\caption{Two main ways of sorting binary sequences}
+\label{figure-orders}
+\center
+\begin{tabular}{|l|l|}
+\hline
+Pseudo-lexicographic & Full lexicographic \\
+\hline
+$0$ & $0$ \\
+$1$ & $00$ \\
+$00$ & $000$ \\
+$01$ & $001$ \\
+$10$ & $01$ \\
+$11$ & $010$ \\
+$000$ & $011$ \\
+$001$ & $1$ \\
+$010$ & $10$ \\
+$011$ & $100$ \\
+$100$ & $101$ \\
+$101$ & $11$ \\
+$110$ & $110$ \\
+$111$ & $111$ \\
+\hline
+\end{tabular}
+\end{figure}
+
+MongoDB sorts binaries pseudo-lexicographically, even if we could find no documentation regarding this. decimalInfinite preserves the ordering of decimals with the semantic understanding of the full lexicographic order.
+
 \section{Encoding}
 \label{section-encoding}
-Let us now get into the details of the encoding itself. The general idea is any non-zero decimal can be expressed in a canonical scientific form with four components (sign, exponent sign, exponent, mantissa). These four components can be encoded separately and concatenated. Since each of the components (but the last one) is a prefix code, it can be unambiguously decoded again.
+Let us now get into the details of the encoding itself. The general idea is any non-zero decimal can be expressed in a canonical scientific form with four components (sign, exponent sign, exponent, significand). These four components can be encoded separately and concatenated. Since each of the components (but the last one) is a prefix code, it can be unambiguously decoded again.
 
 \subsection{Encoding of zero}
 
@@ -244,7 +279,7 @@ where:
 \item The overall sign is $s\in \{-1, 1\}$.
 \item The exponent $e\in \mathbb{N}$ is a non-negative integer (which is the absolute value of the logarithm in base ten of the original number rounded down to the next integer).
 \item The exponent sign is $t\in \{-1, 1\}$.
-\item The mantissa is $m\in [1,10)$, a real number between 1 (included) and 10 (excluded).
+\item The significand is $m\in [1,10)$, a real number between 1 (included) and 10 (excluded).
 \end{itemize}
 
 If S denotes the encoding s, T that of t and so on, then the overall encoding comes naturally as STEM as shown on figure \ref{figure-overall-encoding}. This is because decimal numbers in scientific notation can be sorted with the following criteria in this order:
@@ -252,7 +287,7 @@ If S denotes the encoding s, T that of t and so on, then the overall encoding co
 \item sign
 \item exponent sign
 \item exponent
-\item mantissa
+\item significand
 \end{enumerate}
 
 \begin{figure}
@@ -408,9 +443,9 @@ $4.005012345 \times 10^9$ ($e=9$, same signs) & 10 1110 011...\\
 \end{tabular}
 
 
-\subsection{Encoding the mantissa}
+\subsection{Encoding the significand}
 
-The mantissa is encoded in a way similar to decimal32, decimal64 and decimal128, that is:
+The significand is encoded in a way similar to decimal32, decimal64 and decimal128, that is:
 
 \begin{itemize}
 \item its initial digit (before the comma) is encoded on 4 bits in its natural binary representation.
@@ -420,8 +455,8 @@ The mantissa is encoded in a way similar to decimal32, decimal64 and decimal128,
 If the overall sign of the decimal is negative though, a trick similar to the IBM patent is used: 10-m is encoded instead of m (in this case, the leading digit may be a 0 and will never be a 9).
 
 \begin{figure}
-\caption{Examples of mantissa encodings}
-\label{figure-mantissa-encoding}
+\caption{Examples of significand encodings}
+\label{figure-significand-encoding}
 \center
 \begin{tabular}{|l|l|l|l}
 \hline
@@ -505,9 +540,9 @@ The exponent is then decoded as a modified gamma code (Section \ref{section-gamm
 \item One substracts 2 (example: 9).
 \end{enumerate}
 
-\subsection{Decoding the mantissa}
+\subsection{Decoding the significand}
 
-The mantissa is decoded in groups of 10 bits (except the first group which has 4 bits). Each group is decoded as a natural binary representation. The first group gives the digit before the comma, the other groups give the digits (three per group) after the comma.
+The significand is decoded in groups of 10 bits (except the first group which has 4 bits). Each group is decoded as a natural binary representation. The first group gives the digit before the comma, the other groups give the digits (three per group) after the comma.
 
 If the first group does not deliver a number comprised between 0 and 9, or a subsequent group does not deliver a number comprised between 0 and 999, an error is raised.
 
@@ -520,7 +555,7 @@ The encoding are designed in such a way that, if $a < b$, then the encoded $a$ (
 
 A proof thereof now follows.
 
-$a$'s (absolute) exponent is called $c$, $b$'s exponent is called $d$. $a$'s mantissa is called $e$, b's mantissa is called $f$.
+$a$'s (absolute) exponent is called $c$, $b$'s exponent is called $d$. $a$'s significand is called $e$, b's significand is called $f$.
  
 \begin{enumerate}
 \item If $a$ is negative and $b$ is positive, then $A$ begins with 00 and $B$ with 10, so that $A << B$.
@@ -583,22 +618,21 @@ A prefix of the binary encoding can be taken as an approximation of the encoded 
 
 \section{Complexity}
 \label{section-complexity}
-The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the mantissa, and linear in the logarithm of the exponent, that is, in the logarithm of the logarithm of the decimal.
+The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the significand, and linear in the logarithm of the exponent, that is, in the logarithm of the logarithm of the decimal.
 
-The encoding of the mantissa uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code.
+The encoding of the significand uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code.
+
+\section{Implementation}
+
+The encoding and decoding algorithms were successfully implemented in C++, and is used to store JSON numbers lossless in BSON binaries on an underlying MongoDB layer.
+
+Unfortunately, MongoDB does not use a full lexicographical ordering of binaries (rather, it first sorts by size and then lexicographically), such that padding to a fixed-length was needed for this vendor.
+
+The code has been running with no known issues on production servers since 2012.
 
 \section{Conclusion}
 
-We introduced a binary encoding that:
-\begin{itemize}
-\item supports the entire decimal value space including special numbers
-\item does not lose precision
-\item preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted lexicographically).
-\end{itemize}
-
-The encoding and decoding algorithms were successfully implemented in C++, and is used to store JSON numbers lossless in BSON binaries on an underlying MongoDB layer. Unfortunately, MongoDB does not use a full lexicographical ordering of binaries (rather, it first sorts by size and then lexicographically), such that padding to a fixed-length is needed for this vendor.
-
-The code has been running with no known issues on production servers since 2012.
+We introduced a binary encoding that supports the entire decimal value space including special numbers, that does not lose precision, and that preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted lexicographically). This encoding is simple to explain: its specification in this paper fits on 2 pages. It is not parameterized in any way, making it implementable and understandable in a straightforward way.
 
 \section{Acknowledgements}
 decimalInfinite was implemented on the 28msec platform with the help of Matthias Brantner and Till Westmann.
