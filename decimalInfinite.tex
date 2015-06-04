@@ -7,7 +7,7 @@
 \usepackage[usenames,dvipsnames]{color}
 \begin{document}
 
-\title{decimalInfinite: A Lossless, Order-Preserving Binary Encoding Of All Decimals}
+\title{decimalInfinite: All Decimals In Bits.\\ No Loss. Same Order. Simple.}
 
 \numberofauthors{1}
 
@@ -38,11 +38,11 @@ In the modern database era, notably document stores, syntaxes such as XML \cite{
 
 The difference with scientific software, though, is that there is more to it than performing computations. These numbers need to be efficiently stored and retrieved, but most importantly, this must be done in such a way that they can be indexed. For efficiency reasons, it is desirable that this comparison can be done without decoding them. While this is trivial for hash indices, it becomes more difficult for range indices. Indeed, the lexicographical order of encoded values must correspond to the ordering of the corresponding numbers.
 
-When decimalInfinite was designed, to the extent of our knowledge and our investigations, state-of-the-art databases did not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings existed that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously. In particular, none of the separate schemes used are new: decimalInfinite is only original in the way it puts them all together.
+When decimalInfinite was designed, to the extent of our knowledge and our investigations, state-of-the-art databases did not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously. In particular, none of the separate schemes used are new: decimalInfinite is only original in the way it puts them all together.
 
-More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals.
+This paper contributes an encoding that solves this problem. More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals.
 
-This paper contributes an encoding that solves this problem. The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store.
+The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store.
 
 The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (also called mantissa by Von Neumann, although, as is common practice, we prefer to avoid this terminology because of its different meaning for logarithm computation). These four components are encoded in turn and in this order.
 
@@ -147,7 +147,7 @@ Integer & Signed binary representation \\
 \subsection{Elias Gamma Code}
 \label{section-gamma-code}
 
-Gamma codes are a variable length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
+Gamma codes are a variable-length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how it looks like for the first integers.
 
 \begin{figure}
 \caption{The Gamma Code for the first non-negative integers}
@@ -169,18 +169,18 @@ Integer & Offset integer & Gamma \\
 \hline
 5 & 6 (110) & 001 10 \\
 \hline
-... & ... \\
+... & ... & ... \\
 \hline
 \end{tabular}
 \end{figure}
 
  The main idea is that a first sequence of 0s, terminated by a 1, encodes the length of the binary-representation of the integer. Then, the natural binary representation of the integer (most of the time offset by 1), without its leading 1, follows.
 
-Since the number of 0s is identical to the number of digits that follow after the 1, it is possible to unambiguously deduct where the encoding stops from the number of leading 0s.
+Since the initial number of 0s is identical to the number of digits that follow after the 1, it is possible to unambiguously deduct where the encoding stops from the number of leading 0s.
 
 For example, 00110010 can be unambiguously separated into 00110 (5) and 010 (1).
 
-The Gamma code in its original form is order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown on Figure \ref{figure-gamma-encoding-tweaked}.
+The Gamma code in its original form is not order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown on Figure \ref{figure-gamma-encoding-tweaked}.
 
 \begin{figure}
 \caption{A slight modification of the Gamma Code that makes it order-preserving}
@@ -211,7 +211,7 @@ Integer & Gamma (order-preserving) \\
 
 Regardless of whether decimals are stored in fixed point format or in floating point format, the sequence of its significant digits needs to be encoded.
 
-The Binary-coded decimal encoding (BCD) encodes each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits (declets). It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations, however does not preserve order. The Densely packed decimal encoding \cite{DPD} is an improvement upon the ChenHo encoding.
+The Binary-coded decimal encoding (BCD) encodes each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits (declets). It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations, however does not preserve order. The Densely packed decimal (DPD) encoding \cite{DPD} is an improvement upon the ChenHo encoding.
 
 \subsection{IEEE float and double encoding}
 
@@ -222,10 +222,12 @@ The US Patent 7685214 (``Order-preserving encoding formats of floating-point dec
 
 One very interesting idea in this approach is that, if the sign is negative, the significand m is encoded as 10-m to preserve the order.
 
-\subsection{The Rishe Encoding}
+\subsection{The Matula-Kornerup and the Rishe Encodings}
 \label{section-rishe}
 
-The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on the arbitrary choice of 128 intervals based on the use case. decimalInfinite does not rely on such a choice and scales up regardless of how large, small or precise decimals are.
+The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature in terms of problem solving. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on an arbitrary choice of intervals (128) based on the use case. decimalInfinite does not rely on such a choice and scales up continuously, regardless of how large, small or precise decimals are.
+
+The Rishe encoding was itself proposed as an improvement upon the Matula-Kornerup encoding \cite{Kornerup1983}, which relies on a representation of the decimal as a continuous fraction. The latter did not scale up with exponents.
 
 \section{Ordering sequences of bits}
 
@@ -277,7 +279,7 @@ where:
 
 \begin{itemize}
 \item The overall sign is $s\in \{-1, 1\}$.
-\item The exponent $e\in \mathbb{N}$ is a non-negative integer (which is the absolute value of the logarithm in base ten of the original number rounded down to the next integer).
+\item The exponent $e\in \mathbb{N}$ is a non-negative integer (which is the absolute value of the logarithm in base ten of the original number, rounded down to the next integer).
 \item The exponent sign is $t\in \{-1, 1\}$.
 \item The significand is $m\in [1,10)$, a real number between 1 (included) and 10 (excluded).
 \end{itemize}
@@ -452,7 +454,7 @@ The significand is encoded in a way similar to decimal32, decimal64 and decimal1
 \item the remaining digits (after the comma) are grouped 3 by 3 (declets). Each declet is encoded in its natural binary representation on 10 bits. Trailing 0s are added to make sure that the last group also has 3 digits.
 \end{itemize}
 
-If the overall sign of the decimal is negative though, a trick similar to the IBM patent is used: 10-m is encoded instead of m (in this case, the leading digit may be a 0 and will never be a 9).
+If the overall sign of the decimal is negative though, a trick similar to the IBM patent is used: 10-m is encoded instead of m (in this case, the leading digit may be a 0).
 
 \begin{figure}
 \caption{Examples of significand encodings}
@@ -518,7 +520,7 @@ The exponent sign can be deduced from the third bit, but depends on the overall 
 
 \subsubsection{Decoding the exponent}
 
-The exponent encoding, starting at the third bit, is of variable length. Since gamma codes are prefix codes though, determining the length of the exponent encoding is straight forward.
+The exponent encoding, starting at the third bit, is of variable length. Since gamma codes are prefix codes though, determining the length of the exponent encoding is straightforward.
 
 One starts at the third bit and, including it, counts the number of identical bits that follow. If there is a sequence of N identical bits (whether 0s or 1s) starting from the third bit, then the exponent is encoded on 2N+1 bits.
 
@@ -562,19 +564,34 @@ $a$'s (absolute) exponent is called $c$, $b$'s exponent is called $d$. $a$'s sig
 \item If $a$ and $b$ are both positive, then they both begin with 10.
 \begin{enumerate}
   \item If $A$'s exponent is negative and $B$'s exponent is positive, the next digit in $A$ will be a 0 and that of $B$ a 1, so that $A << B$.
+
+  Otherwise the exponents have the same sign.
   \item If $A$'s exponent and $B$'s exponent are both positive, and $c+2$ has less digits than $d+2$, then $A$ will have less 1s than $B$ in front of the next 0, so that $A << B$.
-  \item If $A$'s exponent and $B$'s exponent are both positive but different, then $c < d$ and $c+2$ has as many digits ($N$) as $d+2$ then both $A$ and $B$ will both have $N-1$ 1s followed by a 0. The next $N-1$ digits after the 0 in $A$ and $B$ correspond to a natural binary representation (with no leading 1) of $c$ and $d$ respectively, so that $A << B$ because the natural binary representations preserve order given a fix number of digits.
-  \item If $A$'s exponent and $B$'s exponent are both negative but different, then $c > d$ and $c+2$ has as many digits ($N$) than $d+2$ then both $A$ and $B$ will both have $N-1$ 0s followed by a 1. The next $N-1$ digits after the 0 in $A$ and $B$ ($E$ and $F$ respectively) correspond to an inverted natural binary representation, with no leading 0, of $c$ and $d$ respectively. Since $c > d$, $E << F$ because it's inverted, and $A << B$.
+  \item If $A$'s exponent and $B$'s exponent are both negative, and $c+2$ has more digits than $d+2$, then $A$ will have more 0s than $B$ in front of the next 1, so that $A << B$.
+
+  Otherwise the exponents have the same sign and their offsets by 2 have the same number of bits.
+  \item If $A$'s exponent and $B$'s exponent are both positive but different ($c < d$) and $c+2$ has as many digits ($N$) as $d+2$, then $A$ and $B$ will both have $N-1$ 1s followed by a 0. The next $N-1$ digits after the 0 in $A$ and $B$ correspond to a natural binary representation (with no leading 1) of $c$ and $d$ respectively, so that $A << B$ because the natural binary representations preserve order given a fix number of digits.
+  \item If $A$'s exponent and $B$'s exponent are both negative but different ($c > d$) and $c+2$ has as many digits ($N$) than $d+2$, then $A$ and $B$ will both have $N-1$ 0s followed by a 1. The next $N-1$ digits after the 0 in $A$ and $B$ ($E$ and $F$ respectively) correspond to an inverted natural binary representation, with no leading 0, of $c$ and $d$ respectively. Since $c > d$, $E << F$ because it's inverted, and $A << B$.
+
+  Otherwise the exponents are identical.
   \item If $A$'s exponent and $B$'s exponent are equal, then $e < f$ and then both $A$ and $B$ have the same next $2N-1$ digits. The next digits of $A$ and $B$, organized in one group of 4, then groups of 10, are all natural binary representations of $e$ and $f$ and preserve the order, so that $A << B$.
   \end{enumerate}
 \item If $A$ and $B$ are both negative, then both begin with 01.
   \begin{enumerate}
   \item If $A$'s exponent is positive and $B$'s exponent is negative, the next digit in $A$ will be a 0 and that of $B$ a 1, so that $A << B$.
-  \item If $A$'s exponent and $B$'s exponent are both negative but different, then $c < d$ and $c+2$ has as many digits ($N$) than $d+2$ then both $A$ and $B$ will both have $N-1$ 1s followed by a 0. The next $N-1$ digits after the 0 in $A$ and $B$ correspond to a natural binary representation (with no leading 1) of $c$ and $d$ respectively, so that $A << B$ because the natural binary representations preserve order given a fix number of digits.
-  \item If $A$'s exponent and $B$'s exponent are both positive but different, then $c > d$ and $c+2$ has as many digits ($N$) than $d+2$ then both $A$ and $B$ will both have $N-1$ 0s followed by a 1. The next $N-1$ digits after the 0 in $A$ and $B$ ($E$ and $F$ respectively) correspond to an inverted natural binary representation, with no leading 0, of $c$ and $d$ respectively. Since $c > d$, $E << F$ because it's inverted, and $A << B$.
-  \item If $A$'s exponent and $B$'s exponent are equal, then $e > f$ and both $A and B$ have the same next $2N-1$ digits. The next digits of $A$ and $B$, organized in one group of 4, then groups of 10, are all natural binary representations of $10-e$ and $10-f$ and preserve the order. Since $10-e < 10-f$, $A << B$.
+
+  Otherwise the exponents have the same sign.
+  \item If $A$'s exponent and $B$'s exponent are both positive, and $c+2$ has more digits than $d+2$, then $A$ will have more 0s than $B$ in front of the next 1, so that $A << B$.
+  \item If $A$'s exponent and $B$'s exponent are both negative, and $c+2$ has less digits than $d+2$, then $A$ will have less 1s than $B$ in front of the next 0, so that $A << B$.
+
+  Otherwise the exponents have the same sign and their offsets by 2 have the same number of bits.
+  \item If $A$'s exponent and $B$'s exponent are both negative but different ($c < d$) and $c+2$ has as many digits ($N$) than $d+2$, then $A$ and $B$ will both have $N-1$ 1s followed by a 0. The next $N-1$ digits after the 0 in $A$ and $B$ correspond to a natural binary representation (with no leading 1) of $c$ and $d$ respectively, so that $A << B$ because the natural binary representations preserve order given a fix number of digits.
+  \item If $A$'s exponent and $B$'s exponent are both positive but different ($c > d$) and $c+2$ has as many digits ($N$) than $d+2$, then $A$ and $B$ will both have $N-1$ 0s followed by a 1. The next $N-1$ digits after the 0 in $A$ and $B$ ($E$ and $F$ respectively) correspond to an inverted natural binary representation, with no leading 0, of $c$ and $d$ respectively. Since $c > d$, $E << F$ because it's inverted, and $A << B$.
+
+  Otherwise the exponents are identical.
+  \item If $A$'s exponent and $B$'s exponent are equal, then $e > f$ and both $A$ and $B$ have the same next $2N-1$ digits. The next digits of $A$ and $B$, organized in one group of 4, then groups of 10, are all natural binary representations of $10-e$ and $10-f$ and preserve the order. Since $10-e < 10-f$, $A << B$.
   \end{enumerate}
-\item -0 is encoded as 10 and 10 is lexicographically smaller than the encodings of negative decimals, which begin with 01. it is lexicographically greater than the encodings of positive decimals, which begin with 10 followed by at least one further digit.
+\item 0 is encoded as 10 and 10 is lexicographically smaller than the encodings of negative decimals, which begin with 01. it is lexicographically greater than the encodings of positive decimals, which begin with 10 followed by at least one further digit.
 \end{enumerate}
 
 \section{Fine-tuning the scheme}
@@ -620,24 +637,87 @@ A prefix of the binary encoding can be taken as an approximation of the encoded 
 \label{section-complexity}
 The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the significand, and linear in the logarithm of the exponent, that is, in the logarithm of the logarithm of the decimal.
 
-The encoding of the significand uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code.
+The encoding of the significand uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational complexity. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code.
 
 \section{Implementation}
 
 The encoding and decoding algorithms were successfully implemented in C++, and is used to store JSON numbers lossless in BSON binaries on an underlying MongoDB layer.
 
-Unfortunately, MongoDB does not use a full lexicographical ordering of binaries (rather, it first sorts by size and then lexicographically), such that padding to a fixed-length was needed for this vendor.
+Unfortunately, MongoDB does not use a full lexicographical ordering of binaries (rather, pseudo-lexicographically), such that padding to a fixed-length was needed for this vendor.
 
 The code has been running with no known issues on production servers since 2012.
 
 \section{Conclusion}
 
-We introduced a binary encoding that supports the entire decimal value space including special numbers, that does not lose precision, and that preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted lexicographically). This encoding is simple to explain: its specification in this paper fits on 2 pages. It is not parameterized in any way, making it implementable and understandable in a straightforward way.
+We introduced a binary encoding that supports the entire decimal value space including special numbers, that does not lose precision, and that preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted fully lexicographically). This encoding is simple to explain: its specification in this paper fits on 2 pages. It is not parameterized in any way, making it implementable and understandable in a straightforward way.
 
 \section{Acknowledgements}
 decimalInfinite was implemented on the 28msec platform with the help of Matthias Brantner and Till Westmann.
 
 \bibliographystyle{abbrv}
-\bibliography{decimalinfinite}
+\begin{thebibliography}{10}
+
+\bibitem{BSON}
+{{BSON (Binary JSON)}}.
+\newblock \url{http://www.bsonspec.org/}.
+
+\bibitem{MAPLE}
+Maple.
+\newblock \url{http://www.maplesoft.com/}.
+
+\bibitem{MATLAB}
+Matlab.
+\newblock \url{http://mathworks.com/products/matlab}.
+
+\bibitem{MATHEMATICA}
+{{Wolfram Mathematica}}.
+\newblock \url{http://www.wolfram.com/mathematica}.
+
+\bibitem{JSON}
+E.~I. 2013.
+\newblock {JSON: JavaScript Object Notation}.
+\newblock \url{http://www.json.org/}, October 2013.
+
+\bibitem{XML}
+T.~Bray, J.~Paoli, C.~M. Sperberg-McQueen, E.~Maler, and F.~Yergeau.
+\newblock {XML Specification (Recommendation)}.
+\newblock \url{http://www.w3.org/TR/xml}, November 2008.
+
+\bibitem{VonNeumann1946}
+A.~Burks, H.~Goldstine, and J.~von Neumann.
+\newblock Preliminary discussion of the logical design of an electronic
+  computing instrument.
+\newblock {\em Inst. for Advanced Study, Princeton, N. J.}, 1946.
+
+\bibitem{ChenHo}
+T.~C. Chen and I.~T. Ho.
+\newblock Storage-efficient representation of decimal data.
+\newblock {\em Commun. ACM}, 18(1):49--52, Jan. 1975.
+
+\bibitem{DPD}
+M.~Cowlishaw.
+\newblock Densely packed decimal encoding.
+\newblock {\em Computers and Digital Techniques, IEE Proceedings -},
+  149(3):102--104, May 2002.
+
+\bibitem{Kornerup1983}
+D.~Matula and P.~Kornerup.
+\newblock An order preserving finite binary encoding of the rationals.
+\newblock In {\em Computer Arithmetic (ARITH), 1983 IEEE 6th Symposium on},
+  pages 201--209, June 1983.
+
+\bibitem{MongoDB}
+MongoDB.
+\newblock {MongoDB}.
+\newblock \url{http://www.mongodb.org/}, 2009.
+
+\bibitem{Rishe1992}
+N.~Rishe.
+\newblock Interval-based approach to lexicographic representation and
+  compression of numeric data.
+\newblock {\em Data and Knowledge Engineering}, 8(4):339 -- 351, 1992.
+
+\end{thebibliography}
+
 
 \end{document}
