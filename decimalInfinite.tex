@@ -687,11 +687,11 @@ As suggested by Nathan Hurst, decimalInfinite can be turned into a prefix code (
 
 \section{Complexity}
 \label{section-complexity}
-The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the significand, and logarithmic in the exponent, that is, double-logarithmic in the decimal.
+The storage space is linear in the size (number of digits) of the significand, and logarithmic in the exponent, that is, double-logarithmic in the decimal.
 
 The encoding size of a decimal can be computed with:
 
-$$5 + 2 \lfloor\log_2 e\rfloor + \frac{10}{3} (|m|-1)$$
+$$5 + 2 \lfloor\log_2 (e+2)\rfloor + \frac{10}{3} (|m|-1)$$
 
 Where $|m|$ denotes the number of decimal digits in the significand. Asymptotically, it can be approximated further with $$2 \log_2 e + \frac{10}{3}|m|$$ that is $$O(\log e + |m|)$$
 
@@ -699,7 +699,7 @@ The encoding of the significand uses a common approach that is very compact in t
 
 The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code. For large decimals, the Rishe encoding contributes a factor of $0.8 \log_{10} d$ (logarithmic) to the exponent part (semi-progressive intervals require 8 bits for an increase of 10 in the exponent), whereas decimalInfinite contributes only $2 \log_{10}\log_{10} d$ (double-logari\-thmic).
 
-If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\log_{10} i$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity (see Figure \ref{figure-size}).
+If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\lfloor\log_{10} i\rfloor$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity (see Figure \ref{figure-size}).
 
 This logarithmic complexity is identical to that of the Rishe encoding, except that the constant is slightly lower (3.3 vs. 4.8).
 
@@ -717,7 +717,7 @@ The blue lines show the fix-length binary natural representation on 32, 64 and 1
   xmin=1,
   ymin=0
 ]
-\addplot[smooth] table {integer_size.dat};
+\addplot[sharp plot] table {integer_size.dat};
 \addplot[blue,domain=1:4e9]{32};
 \addplot[blue,domain=1:1e19]{64};
 \addplot[blue,domain=1:3e38]{128};
@@ -743,6 +743,73 @@ We introduced a binary encoding that supports the entire decimal value space inc
 decimalInfinite was implemented on the 28.io platform with the help of Matthias Brantner and Till Westmann. Also, many thanks to Nathan Hurst for his prompt and useful feedback.
 
 \bibliographystyle{abbrv}
-\bibliography{decimalinfinite}
+\begin{thebibliography}{10}
+
+\bibitem{BSON}
+{{BSON (Binary JSON)}}.
+\newblock \url{http://www.bsonspec.org/}.
+
+\bibitem{MAPLE}
+Maple.
+\newblock \url{http://www.maplesoft.com/}.
+
+\bibitem{MATLAB}
+Matlab.
+\newblock \url{http://mathworks.com/products/matlab}.
+
+\bibitem{MATHEMATICA}
+{{Wolfram Mathematica}}.
+\newblock \url{http://www.wolfram.com/mathematica}.
+
+\bibitem{JSON}
+E.~I. 2013.
+\newblock {JSON: JavaScript Object Notation}.
+\newblock \url{http://www.json.org/}, October 2013.
+
+\bibitem{XML}
+T.~Bray, J.~Paoli, C.~M. Sperberg-McQueen, E.~Maler, and F.~Yergeau.
+\newblock {XML Specification (Recommendation)}.
+\newblock \url{http://www.w3.org/TR/xml}, November 2008.
+
+\bibitem{VonNeumann1946}
+A.~Burks, H.~Goldstine, and J.~von Neumann.
+\newblock Preliminary discussion of the logical design of an electronic
+  computing instrument.
+\newblock {\em Inst. for Advanced Study, Princeton, N. J.}, 1946.
+
+\bibitem{ChenHo}
+T.~C. Chen and I.~T. Ho.
+\newblock Storage-efficient representation of decimal data.
+\newblock {\em Commun. ACM}, 18(1):49--52, Jan. 1975.
+
+\bibitem{DPD}
+M.~Cowlishaw.
+\newblock Densely packed decimal encoding.
+\newblock {\em Computers and Digital Techniques, IEE Proceedings -},
+  149(3):102--104, May 2002.
+
+\bibitem{decimalInfiniteJSONiq}
+G.~Fourny.
+\newblock {{decimalInfinite implementation in JSONiq}}.
+\newblock \url{https://github.com/ghislainfourny/decimalinfinite}, June 2015.
+
+\bibitem{Kornerup1983}
+D.~Matula and P.~Kornerup.
+\newblock An order preserving finite binary encoding of the rationals.
+\newblock In {\em Computer Arithmetic (ARITH), 1983 IEEE 6th Symposium on},
+  pages 201--209, June 1983.
+
+\bibitem{MongoDB}
+MongoDB.
+\newblock {MongoDB}.
+\newblock \url{http://www.mongodb.org/}, 2009.
+
+\bibitem{Rishe1992}
+N.~Rishe.
+\newblock Interval-based approach to lexicographic representation and
+  compression of numeric data.
+\newblock {\em Data and Knowledge Engineering}, 8(4):339 -- 351, 1992.
+
+\end{thebibliography}
 
 \end{document}
