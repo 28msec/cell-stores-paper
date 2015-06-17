@@ -5,6 +5,7 @@
 \usepackage{listings}
 \usepackage{url}
 \usepackage[usenames,dvipsnames]{color}
+\usepackage{pgfplots}
 \begin{document}
 
 \title{decimalInfinite: All Decimals In Bits.\\ No Loss. Same Order. Simple.}
@@ -40,11 +41,11 @@ In the context of document stores, decimal numbers need to be efficiently stored
 
 When decimalInfinite was designed, to the extent of our knowledge and our investigations, state-of-the-art databases did not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously. In particular, none of the separate schemes used are new: decimalInfinite is only original in the way it puts them all together.
 
-This paper contributes an encoding that solves this problem. More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals.
+This paper contributes an encoding that solves this problem. More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals. decimalInfinite also improves the asymptotic complexity for large decimals or integers.
 
-The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store. Another implementation is available in JSONiq \cite{decimalInfiniteJSONiq}: the encoding takes only 117 lines of code, which gives an idea about the simplicity of decimalInfinite.
+The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store. Another implementation is available in JSONiq \cite{decimalInfiniteJSONiq}: the encoding takes only 117 lines of code.
 
-The encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (also called mantissa by Von Neumann, although, as is common practice, we prefer to avoid this terminology because of its different meaning for logarithm computation). These four components are encoded in turn and in this order.
+The decimalInfinite encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (also called mantissa by Von Neumann, although, as is common practice, we prefer to avoid this terminology because of its different meaning for logarithm computation). These four components are encoded in turn and in this order.
 
 Section \ref{section-related-work} gives an overview of the integer and decimal encoding landscape.
 Section \ref{section-ordering} gives an overview of the main two ways of sorting sequences of bits.
@@ -53,7 +54,7 @@ Section \ref{section-decoding} gives the decoding algorithm.
 Section \ref{section-proof} gives a detailed proof of the main property of decimalInfinite (that it is order preserving).
 Section \ref{section-examples} shows the encoding of the smallest integers.
 Section \ref{section-fine-tune} shows how the core of the encoding can be extended to special numbers (NaN, infinity, etc).
-Section \ref{section-complexity} briefly summarizes complexity aspects.
+Section \ref{section-complexity} briefly summarizes complexity aspects, including a comparison to the Rishe encoding.
 Section \ref{section-implementation} gives a few implementation details.
 
 \section{Related work}
@@ -690,22 +691,49 @@ In environments where encoding preserving lexicographic order is not supported a
 A prefix of the binary encoding can be taken as an approximation of the encoded decimal, possibly padded with leading 0s if too short. This works as long as the total stored lengths exceeds the length of the encoding of the sign and exponent, which limits the range.
 
 \subsection{Prefix code variant}
+\label{section-prefix-code}
 
 As suggested by Nathan Hurst, decimalInfinite can be turned into a prefix code. This can be achieved by adding a bit after each tetrade and declet in the significand encoding, to indicate whether further bits follow (1) or not (0). This is not compatible with \ref{section-trailing-zeros}.
 
 \section{Complexity}
 \label{section-complexity}
-The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the significand, and linear in the logarithm of the exponent, that is, in the logarithm of the logarithm of the decimal.
+The encoding and decoding time, as well as the storage space, is linear in the size (number of digits) of the significand, and logarithmic in the exponent, that is, double-logarithmic in the decimal.
 
-A very simple approximation of the encoding size of a decimal is
+The encoding size of a decimal can be computed with:
 
-$$7 + 2 \log_2 e + \frac{10}{3} (|m|-1)$$
+$$5 + 2 \lfloor\log_2 e\rfloor + \frac{10}{3} (|m|-1)$$
 
-Where $|.|$ denotes the number of decimal digits in the significand. Asymptotically, it can be approximated further with $$2 \log_2 e + 3 |m|$$ that is $$O(\log e + |m|)$$
+Where $|m|$ denotes the number of decimal digits in the significand. Asymptotically, it can be approximated further with $$2 \log_2 e + \frac{10}{3}|m|$$ that is $$O(\log e + |m|)$$
 
-The encoding of the significand uses a very common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational complexity. As stated in \cite{ChenHo}, this wastes 0.34\% of the output space. The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code. Other approaches using continuation flags could be imagined, but introduce a size threshold for the simplest numbers.
+The encoding of the significand uses a common approach that is very compact in terms of entropy, and making it more compact (for example, by grouping bits in bigger groups) would increase computational complexity. The factor of $\frac{10}{3}$ is slightly better than the factor of 4 specified in \cite{Rishe1992}, where 8 bits are on average necessary for each additional two significant digits. For the sake of a fair comparison, note that the prefix-code version (Section \ref{section-prefix-code}) of decimalInfinite would increase the factor to $\frac{11}{3}$. Also, the Rishe encoding of very small integers is, by design, more compact.
 
-If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\log_{10} i$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity.
+The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code. For large decimals, the Rishe encoding contributes a factor of $0.8 \log_{10} d$ (logarithmic) to the exponent part (semi-progressive intervals require 8 bits for an increase of 10 in the exponent), whereas decimalInfinite contributes only $2 \log_{10}\log_{10} d$ (double-logari\-thmic).
+
+If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\log_{10} i$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity (see Figure \ref{figure-size}).
+
+This logarithmic complexity is identical to that of the Rishe encoding, except that the constant is slightly lower (3.3 vs. 4.8).
+
+
+\begin{figure}
+\label{figure-size}
+\caption{Asymptotical size of the encoding for integers (obtained experimentally).}
+The blue lines show the fix-length binary natural representation on 32, 64 and 128 bits on the range they cover.
+
+\begin{tikzpicture}
+\begin{axis}[
+  xlabel=Integer (logarithmic scale),
+  ylabel=Size of the encoding (in bits),
+  xmode=log,
+  xmin=1,
+  ymin=0
+]
+\addplot[smooth] table {integer_size.dat};
+\addplot[blue,domain=1:4e9]{32};
+\addplot[blue,domain=1:1e19]{64};
+\addplot[blue,domain=1:3e38]{128};
+\end{axis}
+\end{tikzpicture}
+\end{figure}
 
 \section{Implementation}
 \label{section-implementation}
@@ -722,7 +750,7 @@ Also, an implementation in JSONiq is available on github \cite{decimalInfiniteJS
 We introduced a binary encoding that supports the entire decimal value space including special numbers, that does not lose precision, and that preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted fully lexicographically). This encoding is simple to explain: its specification in this paper fits on 2 pages. It is not parameterized in any way, making it implementable and understandable in a straightforward way.
 
 \section{Acknowledgements}
-decimalInfinite was implemented on the 28.io platform with the help of Matthias Brantner and Till Westmann. Also, many thanks to Nathan Hurst for his useful feedback.
+decimalInfinite was implemented on the 28.io platform with the help of Matthias Brantner and Till Westmann. Also, many thanks to Nathan Hurst for his prompt and useful feedback.
 
 \bibliographystyle{abbrv}
 \bibliography{decimalinfinite}
