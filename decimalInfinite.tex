@@ -37,7 +37,7 @@ For scientists that need to use bigger numbers and/or more precision, special li
 
 In the modern database era, notably document stores, syntaxes such as XML \cite{XML} and JSON \cite{JSON}, but also their data models and the associated query languages, do not impose any limitation on integers or decimals: on the logical level, the entire value space is covered and the limit is only the size of the available storage.
 
-In the context of document stores, decimal numbers need to be efficiently stored and retrieved, but they also need to be used as index values. Indexing documents on decimal values is the primary use case for decimalInfinite. For efficiency reasons, it is desirable that an index lookup can be done without decoding the decimals stored in a hash index (point queries) or a tree index (range queries). In the latter case, this is possible when the (lexicographical) order of encoded values corresponds to the ordering of the corresponding numbers. Then, only the queried decimals need to be encoded once, and the remaining comparisons occur on the binary sequences only. 
+In the context of document stores, decimal numbers need to be efficiently stored and retrieved, but they also need to be used as index values. Indexing documents on decimal values is the primary use case for decimalInfinite. For efficiency reasons, it is desirable that an index lookup can be done without decoding the decimals stored in a hash index (point queries) or a tree index (range queries). In the latter case, this is possible when the (lexicographic) order of encoded values corresponds to the ordering of the corresponding numbers. Then, only the queried decimals need to be encoded once, and the remaining comparisons occur on the binary sequences only. 
 
 When decimalInfinite was designed, to the extent of our knowledge and our investigations, state-of-the-art databases did not support yet such an encoding that would cover the entire decimal space (that is, the entire value space of the XML xs:decimal type, or the entire value space of JSON numbers). However, many encodings exist that have some of the desired properties. decimalInfinite unifies the ideas in these encodings in such a way that all these properties apply simultaneously. In particular, none of the separate schemes used are new: decimalInfinite is only original in the way it puts them all together.
 
@@ -59,7 +59,7 @@ Section \ref{section-implementation} gives a few implementation details.
 
 \section{Related work}
 
-There are various encodings of integers and decimals commonly used in practice and found in literature. In general, one needs to distinguish between schemes for encoding digits and integers on the one hand (possibly used to encode decimals with fix-point semantics), and schemes based on the former that support floating point encodings.
+There are various encodings of integers and decimals commonly used in practice and found in literature. In general, one needs to distinguish between schemes for encoding digits and integers on the one hand (possibly used to encode decimals with fix-point semantics), and schemes based on the former that support floating point encodings on the other hand.
 
 \label{section-related-work}
 
@@ -67,7 +67,7 @@ There are various encodings of integers and decimals commonly used in practice a
 
 Positive integers have a natural encoding which is simply their representation in base 2, as shown on Figure \ref{figure-natural-encoding}.
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Natural encoding of an integer (base 2), not padded and padded to 4 bits.}
 \label{figure-natural-encoding}
 \center
@@ -96,9 +96,9 @@ If however the range is limited, for example to 8, 16, 32 or 64 bits, as is comm
 
 \subsection{Signed Integers}
 
-Signed integers are commonly stored by encoding the sign in the first bit, meaning that positive integers (beginning with a 0, which is half the range) are stored in the same way as the unsigned encoding, while negative integers are stored beginning with a 1. Lexicographical order is only preserved for positive integers, as well as for negative integers, but not overall.
+Signed integers are commonly stored by encoding the sign in the first bit (Figure \ref{figure-natural-signed-encoding}), meaning that positive integers (beginning with a 0, which is half the range) are stored in the same way as the unsigned encoding, while negative integers are stored beginning with a 1. Lexicographic order is only preserved for positive integers, as well as for negative integers, but not overall.
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Natural encoding of signed integers (base 2, padded to 4 bits).}
 \label{figure-natural-signed-encoding}
 \center
@@ -130,7 +130,7 @@ Integer & Signed binary representation \\
 
 Gamma codes are a variable-length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how the Gamma code looks like for the first integers.
 
-\begin{figure}
+\begin{figure}[p]
 \caption{The Gamma Code for the first non-negative integers, and the modified, order-preserving gamma code.}
 \label{figure-gamma-encoding}
 \center
@@ -165,11 +165,10 @@ The Gamma code in its original form is not order preserving. However, simply inv
 
 \subsection{BCD, Chen-Ho, DPD}
 
-Regardless of whether decimals are stored in fixed point format or in floating point format, the sequence of its significant digits needs to be encoded.
+Regardless of whether decimals are stored in fixed point format or in floating point format, the sequence of their significant digits needs to be encoded.
 
-The Binary-coded decimal encoding (BCD) encodes each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits (declets). It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations. However, it does not preserve order. The Densely packed decimal (DPD) encoding \cite{DPD} is an improvement upon the ChenHo encoding.
+The Binary-coded decimal encoding (BCD) encodes each digit in a group of 4 or 8 digits, so-called tetrades. Improvements include the Chen-Ho \cite{ChenHo} encoding, which manages to encode 3 digits on 10 bits (declets). It has the nice particularity of being extremely efficient to process (no multiplications, no divisions), and of being friendly to decimal computations. However, it does not preserve order. The Densely packed decimal (DPD) encoding \cite{DPD} is an improvement upon the Chen-Ho encoding.
 
-\vspace{100pt}
 \subsection{IEEE float and double encoding}
 
 The IEEE 754 standard specifies a couple of standard, floating-point encoding for decimals more commonly known as float or double in mainstream programming languages. It both supports a finite range of decimals (its length is fixed), and is not order-preserving. It has several variants (binary16, binary32, binary64, binary128, decimal32, decimal64, decimal128) depending on the length and on the way the significand is encoded. These encodings rely on DPD.
@@ -184,14 +183,14 @@ One very interesting idea in this approach is that, if the sign is negative, the
 
 The Rishe Encoding \cite{Rishe1992} is the closest match to decimalInfinite we found in literature in terms of problem solving. It supports arbitrarily large, small and precise decimals, is compact, and is also compatible with a bitwise lexicographic comparison. However, it relies on an arbitrary choice of intervals (128) based on the use case. decimalInfinite does not rely on such a choice and scales up continuously, regardless of how large, small or precise decimals are.
 
-The Rishe encoding was itself proposed as an improvement upon the Matula-Kornerup encoding \cite{Kornerup1983}, which relies on a representation of the decimal as a continuous fraction. The latter did not scale up with exponents.
+The Rishe encoding was itself proposed as an improvement upon the Matula-Kornerup encoding \cite{Kornerup1983}, which relies on a representation of the decimal as a continuous fraction. The latter did not scale up with exponents. The exponent part of Rishe scales up logarithmically in the decimal, while that of decimalInfinite scales up double-logarithmically (see Section \ref{section-complexity}).
 
 \section{Ordering sequences of bits}
 \label{section-ordering}
 
 There are two widespread ways of sorting sequences of bits, as shown on Figure \ref{figure-orders}. The first one, pseudo-lexicographic (also called in literature shortlex, quasi-lexicographic, length-lexicographic), first orders by size, and then within a size, lexicographically. The second one, regardless of the size, compares the bits from the left to the right, with the convention that, when a sequence is a prefix of another, the shorter one comes first.
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Two main ways of sorting binary sequences}
 \label{figure-orders}
 \center
@@ -225,13 +224,7 @@ Let us now get into the details of the encoding itself. The general idea is any 
 
 \subsection{Canonical decomposition}
 
-Zero is handled separately and encoded as $10$.
-
-Any non-zero decimal number can be expressed uniquely in scientific notation as in commonly done in literature, that is, in the form
-
-$$s\times m \times10^{t\times e}$$
-
-where:
+Zero is handled separately and encoded as $10$. Any non-zero decimal number can be expressed uniquely in scientific notation as in commonly done in literature, that is, in the form $$s\times m \times10^{t\times e}$$ where:
 
 \begin{itemize}
 \item The overall sign is $s\in \{-1, 1\}$.
@@ -248,7 +241,7 @@ If S denotes the encoding s, T that of t and so on, then the overall encoding co
 \item significand
 \end{enumerate}
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Encoding of an overall decimal in scientific notation $s\times m \times10^{t\times e}$.}
 \label{figure-overall-encoding}
 \center
@@ -262,11 +255,8 @@ $S$ & $T$ & $E$ & $M$ \\
 Throughout this paper, four examples, which cover various combinations of the four components, will be used:
 
 $$-103.2 = - 1.032 \times 10^2$$
-
 $$-0.0405 = -4.05 \times 10^{-2}$$
-
 $$0.707106 = 7.07106 \times 10^{-1}$$
-
 $$4005012345 = 4.005012345 \times 10^9$$
 
 
@@ -274,7 +264,7 @@ $$4005012345 = 4.005012345 \times 10^9$$
 
 The sign of a decimal is encoded on two bits as shown on Figure \ref{figure-sign}
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Encoding of the overall decimal sign.}
 \label{figure-sign}
 \center
@@ -310,7 +300,7 @@ $4.005012345 \times 10^9$ & 10...\\
 
 The exponent sign is encoded on the third bit, as shown on figure \ref{figure-exponent-sign}.
 
-\begin{figure}
+\begin{figure}[p]
 \caption{Encoding of the exponent sign.}
 \label{figure-exponent-sign}
 \center
@@ -575,7 +565,7 @@ We index s, t, e, m, S, T, E and M with a and b, that is, $a$'s (absolute) expon
 
 Figure \ref{figure-first-integers} shows the decimalInfinite encoding for the smallest integers. Integers with an absolute value between 1 and 10 are encoded on 9 bits, and until 100 on 19 bits (less if trailing zeros are removed, as shown in Section \ref{section-trailing-zeros}).
 
-\begin{figure}
+\begin{figure}[h]
 \caption{The encoding of the smallest integers (the space separators are only here for an easier read).}
 \label{figure-first-integers}
 \center
@@ -693,7 +683,7 @@ A prefix of the binary encoding can be taken as an approximation of the encoded 
 \subsection{Prefix code variant}
 \label{section-prefix-code}
 
-As suggested by Nathan Hurst, decimalInfinite can be turned into a prefix code. This can be achieved by adding a bit after each tetrade and declet in the significand encoding, to indicate whether further bits follow (1) or not (0). This is not compatible with \ref{section-trailing-zeros}.
+As suggested by Nathan Hurst, decimalInfinite can be turned into a prefix code (self-delimiting). This can be achieved by adding a bit after each tetrade and declet in the significand encoding, to indicate whether further bits follow (1) or not (0), as is done in the Rishe encoding.
 
 \section{Complexity}
 \label{section-complexity}
@@ -739,7 +729,7 @@ The blue lines show the fix-length binary natural representation on 32, 64 and 1
 \label{section-implementation}
 The encoding and decoding algorithms were successfully implemented in C++, and are used to store JSON numbers lossless in BSON binaries on an underlying MongoDB layer. The decimals are stored with a special library supporting big numbers, however for efficiency reasons we do use classical limited-range integers when dealing with exponents or the number of digits of the decimal to encode. This is not a limitation of the decimalInfinite algorithm, but more a pragmatic decision that it is unlikely that decimals on the order of magnitude of $10^{2^{32}}$, or with a precision of $2^{32}$ digits would be encountered in a real-life setting.
 
-Unfortunately, MongoDB does not use a full lexicographical ordering of binaries (rather, pseudo-lexicographically), such that padding to a fixed length was needed for this vendor.
+Unfortunately, MongoDB does not use a full lexicographic ordering of binaries (rather, pseudo-lexicographically), such that padding to a fixed length was needed for this vendor.
 
 The code has been running with no known issues on production servers since 2012.
 
