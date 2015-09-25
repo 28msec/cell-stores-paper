@@ -1,25 +1,15 @@
-\documentclass{acm_proc_article-sp}
-\usepackage{graphicx}
-\usepackage{balance} 
-\usepackage{multirow}
-\usepackage{listings}
+\documentclass[final,leqno,onefignum,onetabnum]{siamltex1213}
 \usepackage{url}
-\usepackage[usenames,dvipsnames]{color}
 \usepackage{pgfplots}
+\usepackage{amssymb}
 \begin{document}
 
 \title{decimalInfinite: All Decimals In Bits.\\ No Loss. Same Order. Simple.}
 
-\numberofauthors{1}
-
 \author{
-\alignauthor
 Ghislain Fourny\\
-       \affaddr{28msec, Inc.}\\
-       \affaddr{Z\"urich, Switzerland}\\
        \email{g@28.io}
 }
-\date{6 March 2015}
 \maketitle
 
 \begin{abstract}
@@ -65,12 +55,9 @@ There are various encodings of integers and decimals commonly used in practice a
 
 \subsection{Natural encoding}
 
-Positive integers have a natural encoding which is simply their representation in base 2, as shown on Figure \ref{figure-natural-encoding}.
+Positive integers have a natural encoding which is simply their representation in base 2.
 
-\begin{figure}[p]
-\caption{Natural encoding of an integer (base 2), not padded and padded to 4 bits.}
-\label{figure-natural-encoding}
-\center
+
 \begin{tabular}{|l|l|l|}
 \hline
 Integer & Binary representation & Padded representation \\
@@ -88,7 +75,7 @@ Integer & Binary representation & Padded representation \\
 ... & ... & ... \\
 \hline
 \end{tabular}
-\end{figure}
+
 
 It supports an unlimited range, however is not order-preser\-ving.
 
@@ -96,12 +83,8 @@ If however the range is limited, for example to 8, 16, 32 or 64 bits, as is comm
 
 \subsection{Signed Integers}
 
-Signed integers are commonly stored by encoding the sign in the first bit (Figure \ref{figure-natural-signed-encoding}), meaning that positive integers (beginning with a 0, which is half the range) are stored in the same way as the unsigned encoding, while negative integers are stored beginning with a 1. Lexicographic order is only preserved for positive integers, as well as for negative integers, but not overall.
+Signed integers are commonly stored by encoding the sign in the first bit, meaning that positive integers (beginning with a 0, which is half the range) are stored in the same way as the unsigned encoding, while negative integers are stored beginning with a 1. Lexicographic order is only preserved for positive integers, as well as for negative integers, but not overall.
 
-\begin{figure}[p]
-\caption{Natural encoding of signed integers (base 2, padded to 4 bits).}
-\label{figure-natural-signed-encoding}
-\center
 \begin{tabular}{|l|l|}
 \hline
 Integer & Signed binary representation \\
@@ -123,17 +106,14 @@ Integer & Signed binary representation \\
 ... & ... \\
 \hline
 \end{tabular}
-\end{figure}
+
 
 \subsection{Elias Gamma Code}
 \label{section-gamma-code}
 
-Gamma codes are a variable-length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Figure \ref{figure-gamma-encoding} shows how the Gamma code looks like for the first integers.
+Gamma codes are a variable-length encoding that supports the entire non-negative integer range ($\mathbb{N}$). One of their main usage and motivation is that they are prefix codes, meaning that they can get concatenated to each other in a way that they can still be separated again unambiguously. Here is how the Gamma code looks like for the first integers.
 
-\begin{figure}[p]
-\caption{The Gamma Code for the first non-negative integers, and the modified, order-preserving gamma code.}
-\label{figure-gamma-encoding}
-\center
+
 \begin{tabular}{|l|l|l|l|}
 \hline
 Integer & Offset by 1 & Gamma & Modified Gamma \\
@@ -153,7 +133,7 @@ Integer & Offset by 1 & Gamma & Modified Gamma \\
 ... & ... & ... & ... \\
 \hline
 \end{tabular}
-\end{figure}
+
 
  The main idea is that a first sequence of 0s, terminated by a 1, encodes the length of the binary-representation of the integer. Then, the natural binary representation of the integer (most of the time offset by 1), without its leading 1, follows.
 
@@ -161,7 +141,7 @@ Since the initial number of 0s is identical to the number of digits that follow 
 
 For example, 00110010 can be unambiguously separated into 00110 (5) and 010 (1).
 
-The Gamma code in its original form is not order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown in the last column of Figure \ref{figure-gamma-encoding}.
+The Gamma code in its original form is not order preserving. However, simply inverting the first sequence of 0s and the terminating 1 solves the issue, as is shown in the last column of the above table.
 
 \subsection{BCD, Chen-Ho, DPD}
 
@@ -188,12 +168,9 @@ The Rishe encoding was itself proposed as an improvement upon the Matula-Korneru
 \section{Ordering sequences of bits}
 \label{section-ordering}
 
-There are two widespread ways of sorting sequences of bits, as shown on Figure \ref{figure-orders}. The first one, pseudo-lexicographic (also called in literature shortlex, quasi-lexicographic, length-lexicographic), first orders by size, and then within a size, lexicographically. The second one, regardless of the size, compares the bits from the left to the right, with the convention that, when a sequence is a prefix of another, the shorter one comes first.
+There are two widespread ways of sorting sequences of bits:
 
-\begin{figure}[p]
-\caption{Two main ways of sorting binary sequences}
-\label{figure-orders}
-\center
+
 \begin{tabular}{|c|l|}
 \hline
 Pseudo-lexicographic order & Full lexicographic order\\
@@ -214,7 +191,11 @@ $110$ & $110$ \\
 $111$ & $111$ \\
 \hline
 \end{tabular}
-\end{figure}
+
+The first one, pseudo-lexicographic (also called in literature shortlex, quasi-lexicographic, length-lexicographic), first orders by size, and then within a size, lexicographically. The second one, regardless of the size, compares the bits from the left to the right, with the convention that, when a sequence is a prefix of another, the shorter one comes first.
+
+
+
 
 MongoDB sorts binaries pseudo-lexicographically, even if we could find no documentation regarding this. decimalInfinite preserves the ordering of decimals with the semantic understanding of the full lexicographic order.
 
@@ -233,7 +214,15 @@ Zero is handled separately and encoded as $10$. Any non-zero decimal number can 
 \item The significand is $m\in [1,10)$, a real number between 1 (included) and 10 (excluded).
 \end{itemize}
 
-If S denotes the encoding s, T that of t and so on, then the overall encoding comes naturally as STEM as shown on figure \ref{figure-overall-encoding}. This is because decimal numbers in scientific notation can be sorted with the following criteria in this order:
+If S denotes the encoding s, T that of t and so on, then the overall encoding comes naturally as
+
+\begin{tabular}{|l|l|l|l|}
+\hline
+$S$ & $T$ & $E$ & $M$ \\
+\hline
+\end{tabular}
+
+This is because decimal numbers in scientific notation can be sorted with the following criteria in this order:
 \begin{enumerate}
 \item sign
 \item exponent sign
@@ -241,16 +230,7 @@ If S denotes the encoding s, T that of t and so on, then the overall encoding co
 \item significand
 \end{enumerate}
 
-\begin{figure}[p]
-\caption{Encoding of an overall decimal in scientific notation $s\times m \times10^{t\times e}$.}
-\label{figure-overall-encoding}
-\center
-\begin{tabular}{|l|l|l|l|}
-\hline
-$S$ & $T$ & $E$ & $M$ \\
-\hline
-\end{tabular}
-\end{figure}
+
 
 Throughout this paper, four examples, which cover various combinations of the four components, will be used:
 
@@ -262,12 +242,8 @@ $$4005012345 = 4.005012345 \times 10^9$$
 
 \subsection{Encoding the sign}
 
-The sign of a decimal is encoded on two bits as shown on Figure \ref{figure-sign}
+The sign of a decimal is encoded on two bits.
 
-\begin{figure}[p]
-\caption{Encoding of the overall decimal sign.}
-\label{figure-sign}
-\center
 \begin{tabular}{|l|l|}
 \hline
 S & Sign s \\
@@ -277,7 +253,7 @@ S & Sign s \\
 10 & positive sign ($s=1$, e.g., $4.3\times10^3$)\\
 \hline
 \end{tabular}
-\end{figure}
+
 
 Since zero is simply encoded with $10$ with no further bits, it is already apparent that its encoding appears lexicographically after the encoding of any negative decimal, and before the encoding of any positive decimal.
 
@@ -298,12 +274,8 @@ $4.005012345 \times 10^9$ & 10...\\
 \end{tabular}
 \subsection{Encoding the exponent sign}
 
-The exponent sign is encoded on the third bit, as shown on figure \ref{figure-exponent-sign}.
+The exponent sign is encoded on the third bit.
 
-\begin{figure}[p]
-\caption{Encoding of the exponent sign.}
-\label{figure-exponent-sign}
-\center
 \begin{tabular}{|l|l|}
 \hline
 S and T & s and t \\
@@ -317,7 +289,7 @@ S and T & s and t \\
 10 1 & positive sign, non-negative exponent sign\\
 \hline
 \end{tabular}
-\end{figure}
+
 
 The encoding of our four examples continues as follows:
 
@@ -344,16 +316,9 @@ The absolute value of the exponent is encoded with a modified gamma code (as exp
 \item  The first digit is replaced with N-1 ones, followed by a zero (in the case of 110: 110 10)
 \end{enumerate}
 
-Figure \ref{figure-exponent-encoding} shows how the smallest absolute values of the exponent are encoded.
+The table below shows the smallest absolute values of the exponent are encoded.
 
-Once the absolute value of the exponent has been encoded as shown above, it is either negated if $T=0$, or left unchanged if $T=1$. E is then obtained by dropping the first bit of the obtained string (because this first bit is already encoded in T). In other words, the (negated or not) absolute value of the exponent is encoded as TE.
 
-Note that 0 is treated as a non-negative exponent, so that it will always be encoded as 100 if the decimal is positive, and as 011 if the decimal is negative. This means that a decimalInfinite encoding will never begin with 10011 or 00100\footnote{This could have been avoided, but at the cost of offsetting negative exponent encodings (and only them) by 1 instead of 2, which would have introduced more complexity}.
-
-\begin{figure}
-\caption{Encoding the exponent.}
-\label{figure-exponent-encoding}
-\center
 \begin{tabular}{|l|l|l|l|}
 \hline
 e & e offset by 2 & TE & TE\\
@@ -382,7 +347,12 @@ e & e offset by 2 & TE & TE\\
 ... & ... & ...& ...\\
 \hline
 \end{tabular}
-\end{figure}
+
+
+
+Once the absolute value of the exponent has been encoded as shown above, it is either negated if $T=0$, or left unchanged if $T=1$. E is then obtained by dropping the first bit of the obtained string (because this first bit is already encoded in T). In other words, the (negated or not) absolute value of the exponent is encoded as TE.
+
+Note that 0 is treated as a non-negative exponent, so that it will always be encoded as 100 if the decimal is positive, and as 011 if the decimal is negative. This means that a decimalInfinite encoding will never begin with 10011 or 00100\footnote{This could have been avoided, but at the cost of offsetting negative exponent encodings (and only them) by 1 instead of 2, which would have introduced more complexity}.
 
 The encoding of our four examples continues as follows:
 
@@ -408,10 +378,6 @@ The significand is encoded in a way similar to decimal32, decimal64 and decimal1
 
 If the overall sign of the decimal is negative though, a trick similar to the IBM patent is used: $10-m$ is encoded instead of $m$ (in this case, the leading digit may be a 0).
 
-\begin{figure}
-\caption{Examples of significand encodings}
-\label{figure-significand-encoding}
-\center
 \begin{tabular}{|l|l|l|l}
 \hline
 $8.968 (=10-1.032)$ & 8 968 & 1000 \\
@@ -430,7 +396,6 @@ $4.005012345$ & 4 005 012 345 & 0100 \\
 & & 0101011001\\
 \hline
 \end{tabular}
-\end{figure}
 
 The encoding of our four examples can now be completed:
 
@@ -563,12 +528,10 @@ We index s, t, e, m, S, T, E and M with a and b, that is, $a$'s (absolute) expon
 \section{Examples}
 \label{section-examples}
 
-Figure \ref{figure-first-integers} shows the decimalInfinite encoding for the smallest integers. Integers with an absolute value between 1 and 10 are encoded on 9 bits, and until 100 on 19 bits (less if trailing zeros are removed, as shown in Section \ref{section-trailing-zeros}).
+Integers with an absolute value between 1 and 10 are encoded on 9 bits, and until 100 on 19 bits (less if trailing zeros are removed, as shown in Section \ref{section-trailing-zeros}).
 
-\begin{figure}[h]
-\caption{The encoding of the smallest integers (the space separators are only here for an easier read).}
-\label{figure-first-integers}
-\center
+Below is the decimalInfinite encoding for the smallest integers. 
+
 \begin{tabular}{|l|l|}
 \hline
 Decimal & decimalInfinite encoding \\
@@ -637,7 +600,7 @@ Decimal & decimalInfinite encoding \\
 \hline
 \hline
 \end{tabular}
-\end{figure}
+
 
 
 \section{Fine-tuning the scheme}
@@ -645,12 +608,8 @@ Decimal & decimalInfinite encoding \\
 
 \subsection{Special numbers}
 
-Special numbers such as positive and negative infinity, negative zero can also be encoded in such a way that the lexicographic order still holds, as shown on figure \ref{figure-sign-extended}. NaN can also be encoded (even if the order does not apply in this case).
+Special numbers such as positive and negative infinity, negative zero can also be encoded in such a way that the lexicographic order still holds, as shown below. NaN can also be encoded (even if the order does not apply in this case).
 
-\begin{figure}
-\caption{Adding special numbers.}
-\label{figure-sign-extended}
-\center
 \begin{tabular}{|l|l|}
 \hline
 00 & -INF \\
@@ -668,7 +627,7 @@ Special numbers such as positive and negative infinity, negative zero can also b
 111 & NaN \\
 \hline
 \end{tabular}
-\end{figure}
+
 
 \subsection{Trailing zeros}
 \label{section-trailing-zeros}
@@ -699,15 +658,8 @@ The encoding of the significand uses a common approach that is very compact in t
 
 The encoding of the exponent deviates from an optimal size by a constant factor of 2, which is the cost of using the Gamma prefix code. For large decimals, the Rishe encoding contributes a factor of $0.8 \log_{10} d$ (logarithmic) to the exponent part (semi-progressive intervals require 8 bits for an increase of 10 in the exponent), whereas decimalInfinite contributes only $2 \log_{10}\log_{10} d$ (double-logari\-thmic).
 
-If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\lfloor\log_{10} i\rfloor$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity (see Figure \ref{figure-size}).
+If only non-negative integers ($i$) are considered, then $$|m|= \log_{10} i$$ is asymptotically more significant than $$\log_2 e=\log_2\lfloor\log_{10} i\rfloor$$ so that the encoding size grows logarithmically in $i$, which is an optimal complexity.
 
-This logarithmic complexity is identical to that of the Rishe encoding, except that the constant is slightly lower (3.3 vs. 4.8).
-
-
-\begin{figure}
-\label{figure-size}
-\caption{Asymptotic size of the encoding for integers (obtained experimentally with the JSONiq implementation).}
-The blue lines show the fix-length binary natural representation on 32, 64 and 128 bits on the range they cover.
 
 \begin{tikzpicture}
 \begin{axis}[
@@ -723,7 +675,12 @@ The blue lines show the fix-length binary natural representation on 32, 64 and 1
 \addplot[blue,domain=1:3e38]{128};
 \end{axis}
 \end{tikzpicture}
-\end{figure}
+
+This logarithmic complexity is identical to that of the Rishe encoding, except that the constant is slightly lower (3.3 vs. 4.8).
+
+The blue lines show the fix-length binary natural representation on 32, 64 and 128 bits on the range they cover.
+
+
 
 \section{Implementation}
 \label{section-implementation}
