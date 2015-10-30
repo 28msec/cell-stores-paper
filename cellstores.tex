@@ -4,6 +4,7 @@
 \usepackage{multirow}
 \usepackage{listings}
 \usepackage{url}
+\usepackage{amsmath}
 \usepackage[usenames,dvipsnames]{color}
 \begin{document}
 
@@ -13,10 +14,7 @@
 
 \author{
 \alignauthor
-Ghislain Fourny\\
-       \affaddr{28msec, Inc.}\\
-       \affaddr{Z\"urich, Switzerland}\\
-       \email{g@28.io}
+-
 }
 \date{3 October 2014}
 \maketitle
@@ -25,6 +23,12 @@ Ghislain Fourny\\
 Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and retrieval of highly dimensional data. Cells are the primary citizens and exist in different forms, which can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data. The first cell store repository contains roughly 200GB of SEC filings data, and proves that retrieving data cubes can be performed in real time (the threshold acceptable by a human user being at most a few seconds).
 \end{abstract}
 
+% A category with the (minimum) three required fields
+\category{H.2.1}{Database Management}{Logical Design}[Data models]
+
+\terms{Design}
+
+\keywords{analysis, business user, cell, cluster, database, data cube, data model, dimension, fact, financial data, hypercube, multidimensional, OLAP, pivot, query, relational, replicate, scale up, slice and dice, sparse, spreadsheet, standard, structured data, table, user interface, warehouse, XBRL} % NOT required for Proceedings
 
 \section{Introduction}
 In 1970, Codd \cite{Codd1970} introduced the relational model as an alternative to the graph and network models (such as file systems) in order to provide a more suitable interface to users, and to protect them from internal representations (``data independence'').
@@ -459,6 +463,78 @@ Rules can be defined according to several metapatterns, as defined by Charles Ho
 \end{description}
 
 To facilitate the definition of rules, concepts and dimension values are organized in hierarchies. For example, a roll up is typically a parent's being the sum of its children. Arborescent formats such as JSON or XML cover this need well.
+
+\section{Abstract Data Model}
+The data model behind the cell store can be described as an abstract mathematical model involving set theory and relations, in a way similar to the relational model.
+\subsection{Cell Store instance}
+
+Given a set of dimensions $\mathbb{D}$, a set of members $\mathbb{M}$, a set of concepts $\mathbb{C}$ and a set of values $\mathbb{S}$, a cell is given by:
+
+\begin{itemize}
+\item a concept $c$
+\item a dimension-member mapping $m$, also referred to as the dimensional coordinates of the cell
+\item a value $v$
+\end{itemize}
+
+The \emph{world hypercube} contains all the theoretically possible cells and can be defined as a cartesian product:
+
+$$\mathcal{H}(\mathbb{C}, \mathbb{D}, \mathbb{M}, \mathbb{V})=\mathbb{C}\times\mathbb{M}^\mathbb{D}\times\mathbb{V}$$
+
+In this section, we use the exponent notation for mappings as is common in set theory, that is $\mathbb{B}^\mathbb{A}$ is the set of functions mapping elements of $\mathbb{A}$ to elements of $\mathbb{B}$. So, $\mathbb{M}^\mathbb{D}$ is the set of mappings from dimensions to members.
+
+An instance of the cellstore is any subset of the world hypercube.
+
+$$I\subset\mathcal{H}(\mathbb{C}, \mathbb{D}, \mathbb{M}, \mathbb{V})$$
+
+\subsection{Validation}
+
+Metadata is completely decoupled from any cellstore instance.
+
+In terms of data model, the relevant part of the metadata is information that supports validating a cellstore instance. Validating metadata supplies:
+
+\begin{enumerate}
+\item a mapping $\mathcal{T}$ from concepts to types. Types are identified with their value space and are simply subsets of the global value space $\mathbb{V}$.
+$$\mathcal{T}\in\mathcal{P}(\mathbb{V})^\mathbb{C}$$
+
+\item a mapping $\mathcal{M}$ from dimensions to member spaces, which are subsets of the global member space $\mathbb{M}$.
+$$\mathcal{M}\in\mathcal{P}(\mathbb{M})^\mathbb{D}$$
+
+\item a mapping $\mathcal{D}$ from dimensions to default members.
+$$\mathcal{D}\in\mathbb{M}^\mathbb{D}$$
+\end{enumerate}
+
+Given validating metadata, a cell (c, m, v) is valid if:
+\begin{enumerate}
+\item Its value is in the value space of its concept
+$$v\in\mathcal{T}(c)$$
+\item All its members are in the member space of their associated dimensions $$\forall d\in\mathbb{D}, m(d)\in\mathcal{M}(d)$$
+\item Only a finite number of dimensions are associated with non-default members
+$$\{d\in\mathbb{D}, m(d)\neq\mathcal{D}(d)\} \text{ is finite}$$
+\end{enumerate}
+
+In practice, there are two reasons why the finite support condition is satisfied: first, the number of dimensions it itself finite. Second, default members are stored as the absence of any member, and a dimension associated with a default member is simply omitted. Hence, cells occupy a reasonable size in memory even with a high or even infinite number of dimensions.
+
+\subsection{Hypercube queries}
+
+A hypercube query is given by a set of concepts C, as well as a mapping M from dimensions to their member spaces M and a mapping D to their default members. Hence, the set of all hypercube queries is:
+
+$$\mathcal{Q}(\mathbb{C}, \mathbb{D}, \mathbb{M})\in\mathbb{C}\times\mathcal{P}(\mathbb{M})^\mathbb{D}\times\mathbb{M}^\mathbb{D}$$
+
+A hypercube must furthermore must fulfil the constraint of finite support, that is, all but a finite number of dimensions must be associated to the default member singleton. This is similar to the constraint of finite support for cells.
+
+$$\{d\in\mathbb{D}, M_\mathcal{Q}(d)\neq\{\mathcal{D}(d)\}\} \text{ is finite}$$
+
+Given a hypercube query, cells can be retrieved from a cell store instance I:
+
+$$I_\mathcal{Q}\subset I=\{i \in I | c_i\in C_\mathcal{Q} \wedge \forall d\in \mathbb{D}, m_i\in M_\mathcal{Q}(d)\cup D_\mathcal{Q}(d)\}$$ 
+
+\subsection{Collisions}
+
+A cell store instance may or may not have collisions. Collisions occur when several cells have the exact same concept and dimensional coordinates.
+
+$$\exists i_1, i_2 \in I, c_{i_1}=c_{i_2} \wedge \forall d \in \mathbb{D}, m{i_1}(d)=m{i_2}(d)$$
+
+Collisions can have different severity levels: if all colliding cells have the same value, these are simply duplicates. If however they have different values, this is a consistency issue.
 
 \section{Canonical mapping to the relational model}
 \label{section-relational-mapping}
