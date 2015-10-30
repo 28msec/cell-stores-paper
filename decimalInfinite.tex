@@ -14,10 +14,7 @@
 
 \author{
 \alignauthor
-Ghislain Fourny\\
-       \affaddr{28msec, Inc.}\\
-       \affaddr{Z\"urich, Switzerland}\\
-       \email{g@28.io}
+\\
 }
 \date{6 March 2015}
 \maketitle
@@ -742,14 +739,14 @@ Unfortunately, MongoDB does not use a full lexicographic ordering of binaries (r
 
 The code has been running with no known issues on production servers since 2012.
 
-Also, an implementation in JSONiq is available on github \cite{decimalInfiniteJSONiq}, and is exposed publicly via a very basic REST API.
+Also, decimalInfinite was implemented in JSONiq \cite{decimalInfiniteJSONiq} where it was experimentally checked that the order is preserved on sample ranges.
 
 \section{Conclusion}
 
 We introduced a binary encoding that supports the entire decimal value space including special numbers, that does not lose precision, and that preserves the order, in the sense that the encoding is a homomorphism between the decimals (sorted naturally) and the bit sequences (sorted fully lexicographically). This encoding is simple to explain: its specification in this paper fits on 2 pages. It is not parameterized in any way, making it implementable and understandable in a straightforward way.
 
 \section{Acknowledgments}
-decimalInfinite was implemented on the 28.io platform with the help of Matthias Brantner and Till Westmann. Also, many thanks to Nathan Hurst for his prompt and useful feedback.
+decimalInfinite was implemented [...] with the help of [...]. Also, many thanks to [...] for his prompt and useful feedback.
 
 \bibliographystyle{abbrv}
 \begin{thebibliography}{10}
@@ -798,9 +795,8 @@ M.~Cowlishaw.
   149(3):102--104, May 2002.
 
 \bibitem{decimalInfiniteJSONiq}
-G.~Fourny.
 \newblock {{decimalInfinite implementation in JSONiq}}.
-\newblock \url{https://github.com/ghislainfourny/decimalinfinite}, June 2015.
+\newblock \url{---}, June 2015.
 
 \bibitem{Kornerup1983}
 D.~Matula and P.~Kornerup.
