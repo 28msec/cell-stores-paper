@@ -708,6 +708,8 @@ The benefit of flexible hypercube queries in real time comes at the cost of high
 Future cell store implementations (for example, a native cell store) are likely to improve this performance.
 
 \begin{figure*}
+
+\begin{subfigure}[c]{\linewidth}
 \centering
 \begin{tabular}{lcr}
 \hline
@@ -717,19 +719,37 @@ Type of query & Number of cells & Time \\
 \hline
 Point query & 1 & 130 ms \\
 \hline
-Query across a row (Assets of DOW 30 companies for the fiscal year 2014)&31& 150 ms \\
+Row query, across one dimension (Assets of DOW 30 companies for the fiscal year 2014)&31& 150 ms \\
 \hline
-Query across two dimensions (Assets of DOW 30 companies for several reported fiscal years)&191& 340 ms \\
-\hline
-Query of all (raw) cells in a component (Amex consolidated statement of income, Q1 2015) &68& 170 ms \\
+Slice query, across two dimensions (Assets of DOW 30 companies for several reported fiscal years)&191& 340 ms \\
 \hline
 Query of all cells in a component, including mapping, rule execution and validation& 90& 850 ms \\
 \hline
 Building a spreadsheet out of a component, including mapping, rule execution and validation & 403 & 1200 ms \\
 \hline
 \end{tabular}
+\caption{Specific one-time measurements}
+\end{subfigure}
+
+\begin{subfigure}[c]{\linewidth}
+\centering
+\begin{tabular}{lrrr}
+\hline
+\hline
+&Average & Minimum &Maximum\\
+\hline
+Response time to static hypercube queries (over entire filing), in milliseconds&195.3&121.1&450.1\\
+Number of facts retrieved in static hypercube queries&20.6&1&177\\
+Number of dimensions of static hypercube queries&7.7&7&13\\
+Response time to static hypercube queries with validation, in milliseconds&197&120.7&542.4\\
+Number of validated facts&2.1&0&54\\
+\hline
+\end{tabular}
+\caption{Query times and statistics of 160 real-world static hypercubes contained in a fiscal report (American Express, Q2, 2015). Static hypercubes typically overlap and share facts even though they have different dimensions, because of the default dimension machinery.}
+\end{subfigure}
+
 \vspace{3mm}
-\caption{Typical execution times. These were obtained on the proof-of-concept implementation on top of MongoDB, on a repository with 75 millions of cells. The queries were executed through a hypercube-building REST API, and an average was taken on 20 executions). All times are below the threshold acceptable for human interaction.}
+\caption{Typical execution times. These were obtained on the proof-of-concept implementation on top of MongoDB, on a repository with 100 million cells. The response times were measured at the same geographical location as the cell store data and query engine (US East). All times are below the threshold acceptable for human interaction.}
 \label{fig-measurements}
 \end{figure*}
 
