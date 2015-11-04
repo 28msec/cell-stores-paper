@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and retrieval of dimensional data, with a number of dimensions several orders of magnitude higher than what OLAP data cubes can handle. A greater flexibility is provided with a complete decoupling between data and its schema.
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and retrieval of dimensional data, with a number of dimensions several orders of magnitude higher -- to date 10,000+ dimensions -- than what OLAP data cubes can handle. A greater flexibility is provided with a complete decoupling between data and its schema.
 
 Cells are the primary citizens and exist in different forms, which can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data.
 
@@ -762,6 +762,8 @@ Number of validated facts (roll-up and roll-forward rules)&2.1&0&54\\
 \subsection{Static hypercubes}
 
 Figure \ref{fig-measurements} also shows response times for static hypercube queries. The response time for static or dynamic (on the fly) hypercubes is mostly similar, as the underlying execution machinery is the same, however static hypercubes have the advantage of being real-world queries, in that these are the hypercubes used by companies to organize their fiscal reports to the SEC.
+
+It is important to note that these static hypercubes are not schemas: they are \emph{queries} executed against the world hypercube, which has 10,000+ dimensions and 100,000,000 non-empty cells.
 
 It can be seen that, for the fiscal report used in these measurements (American Express, second quarter of 2015), typical response times oscillate between 100ms and 500ms, with a number of dimensions between 7 and 13. These numbers are typical and very similar for other SEC fiscal filings (yearly or quarterly).
 
