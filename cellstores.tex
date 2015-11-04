@@ -116,7 +116,7 @@ OLAP \cite{Codd1993} stands for OnLine Analytical Processing and targets dimensi
 
 A third flavor, HOLAP, is a hybrid of the two. OLAP does not scale up well beyond a few hundred dimensions in total, and shows first signs of weakness with queries that have 10-15 dimensions.
 
-The main vendors (IBM, Microsoft, Oracle, SAP) offer an OLAP implementation.
+The main vendors of OLAP implementations are IBM Cognos, Microsoft Analysis Services, Oracle Hyperion Essbase, SAP BPC.
 
 \subsection{Graph databases}
 
@@ -354,6 +354,8 @@ In particular, a hypercube is highly structured.
 
 \subsubsection{The World Hypercube}
 Theoretically, it would be feasible to build a hypercube with all dimensions used in the gas of cells, allowing default values for all of these. Then all cells would belong to this hypothetical hypercube, called the World Hypercube. However, this is an extremely sparse hypercube, and the size of this hypercube would typically be orders of magnitude greater than the entire visible universe.
+
+Cell stores store their cells individually, at the lowest level of granularity possible. This allows fitting hypercubes that have as many as 10,000+ dimensions on a single machine.
 
 \subsubsection{Materialized hypercube}
 
@@ -639,12 +641,14 @@ XBRL Linkbases provide metadata information in the form of ``networks'', which, 
 \end{description}
 
 \section{Implementation}
-We now give details on the existing implementation on top of MongoDB (NoLAP), as well as hints on how cell stores could also be implemented on top of other kinds of stores -- in particular column stores.
+We now give details on the existing implementation on top of document stores (NoLAP), as well as hints on how cell stores could also be implemented on top of other kinds of stores -- in particular column stores.
 \label{section-implementation}
 
 \subsection{On top of a document store: NoLAP}
 
-The first cell store was implemented on top of a document store (MongoDB \cite{MongoDB}), entirely with the JSONiq language \cite{JSONiq}. The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly \cite{SECXBRL.info}. Hypercube queries or spreadsheet queries can be made via a REST API.
+The first cell store was implemented on top of a document store (MongoDB \cite{MongoDB}), entirely with the JSONiq language \cite{JSONiq}. It is now running on production.
+
+The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly \cite{SECXBRL.info}. Hypercube queries or spreadsheet queries can be made via a REST API.
 
 From a document store metadata perspective, the implementation is very simple, as only two collections are used:
 
@@ -675,6 +679,8 @@ Some additional data such as XBRL filings and filer information, mostly structur
 
 Another collection (concepts) is used in order to optimize querying for concepts, including full text search, and finding out which components they appear in.
 
+Since recently, cell stores also run, also on production, on top of a MarkLogic backend, using the same JSONiq querying codebase, with similar if not better performance. This proves that this implementation of cell stores relies on the common abstraction of document stores to efficiently store homogeneous gas of cells, rather than on any specific features of MongoDB.
+
 \subsection{On top of a column store (e.g., Cassandra)}
 
 From a theoretical viewpoint, a cell store could fit in a sparse Cassandra table, but this would not scale up well: this would require as many primary keys as dimensions, as well as the materialization of default dimension values to special primary key values.
@@ -699,11 +705,11 @@ Hypercube queries are done via a REST API, implemented in JSONiq and executed wi
 
 \subsection{Human acceptance threshold}
 
-The end goal of the design of cell stores is to return results in real time, that is, in a time acceptable by an end user that interacts with the cell store through a UI front end. It is commonly assumed that a human user will not accept response times above 5 seconds, including queries, mappings, rule execution and building the spreadsheet. Cell stores can execute queries on top and across XBRL data that could not be executed in real time before.
+The end goal of the design of cell stores is to return results in real time, that is, in a time acceptable by an end user that interacts with the cell store through a UI front end. It is commonly assumed that a human user will not accept response times above 5 seconds, including queries, mappings, rule execution and building the spreadsheet. The industry standard for OLAP products is to have sub-second response times.
 
-As can be seen on Figure \ref{fig-measurements}, the goal is achieved for the simple use cases tested, and for a repository size above the lower end of typical benchmarks, ca. 100 GB. With 200 GB of data, this is the case.
+As can be seen on Figure \ref{fig-measurements}, the goal is achieved for the simple use cases tested, and for a repository size above the lower end of typical benchmarks, ca. 100 GB. With 200 GB of data, this is the case. Cell stores can execute queries on top and across XBRL data that could not be executed in real time before. The response times were measured at the same geographical location as the cell store data and query engine (US East). 
 
-The benefit of flexible hypercube queries in real time comes at the cost of higher response times for the simplest queries such as point queries: on the order of magnitude of 100+ milliseconds, compared to a few milliseconds for retrieving a document from a document store. However, this is largely below the real time threshold.
+The benefit of running flexible hypercube queries in real time comes at the cost of response times slightly above OLAP standards  -- yet still sub-second -- for the simplest queries such as point queries. For these queries have, the cell store has response times on the order of magnitude of 100 milliseconds. As a comparison, some OLAP vendors (e.g., Oracle Hyperion Essbase) report response times at this magnitude or below (10 ms or sometimes 1 ms).
 
 Future cell store implementations (for example, a native cell store) are likely to improve this performance.
 
@@ -740,18 +746,24 @@ Building a spreadsheet out of a component, including mapping, rule execution and
 \hline
 Response time to static hypercube queries (over entire filing), in milliseconds&195.3&121.1&450.1\\
 Number of facts retrieved in static hypercube queries&20.6&1&177\\
-Number of dimensions of static hypercube queries&7.7&7&13\\
+Number of dimensions of static hypercubes&7.7&7&13\\
 Response time to static hypercube queries with validation, in milliseconds&197&120.7&542.4\\
-Number of validated facts&2.1&0&54\\
+Number of validated facts (roll-up and roll-forward rules)&2.1&0&54\\
 \hline
 \end{tabular}
 \caption{Query times and statistics of 160 real-world static hypercubes contained in a fiscal report (American Express, Q2, 2015). Static hypercubes typically overlap and share facts even though they have different dimensions, because of the default dimension machinery.}
 \end{subfigure}
 
 \vspace{3mm}
-\caption{Typical execution times. These were obtained on the proof-of-concept implementation on top of MongoDB, on a repository with 100 million cells. The response times were measured at the same geographical location as the cell store data and query engine (US East). All times are below the threshold acceptable for human interaction.}
+\caption{Typical execution times. These were obtained on the proof-of-concept implementation on top of MongoDB, on a repository with 100 million cells. All times are below the threshold acceptable for human interaction.}
 \label{fig-measurements}
 \end{figure*}
+
+\subsection{Static hypercubes}
+
+Figure \ref{fig-measurements} also shows response times for static hypercube queries. The response time for static or dynamic (on the fly) hypercubes is mostly similar, as the underlying execution machinery is the same, however static hypercubes have the advantage of being real-world queries, in that these are the hypercubes used by companies to organize their fiscal reports to the SEC.
+
+It can be seen that, for the fiscal report used in these measurements (American Express, second quarter of 2015), typical response times oscillate between 100ms and 500ms, with a number of dimensions between 7 and 13. These numbers are typical and very similar for other SEC fiscal filings (yearly or quarterly).
 
 \subsection{Dimensional scale up}
 
@@ -775,6 +787,11 @@ We randomly picked cells with various numbers of dimensions, and built the corre
 \label{figure-dimension-scaleup}
 \end{figure}
 
+\subsection{Concurrency scale-up}
+
+Data warehouses are typically accessed by concurrent users -- typically, tests are performed with 100 or 1000 users. Because cell stores rely on an underlying data store, data clustering and duplication can be, and is delegated to it. The querying layer can be fully scaled out with any number of independent servers.
+
+The theoretical limit of what cell stores can handle in terms of both size and throughput is hence that of what data storage can handle. Since the querying layer in which cell stores are implemented is decoupled from the storage layer, the latter can be chosen based on the desired performance. Cell stores currently support MongoDB and MarkLogic data storage backends in production.
 
 \section{Future Work}
 
