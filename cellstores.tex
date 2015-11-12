@@ -22,7 +22,7 @@
 \maketitle
 
 \begin{abstract}
-Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and retrieval of dimensional data, with a number of dimensions several orders of magnitude higher -- to date 10,000+ dimensions -- than what OLAP data cubes can handle. A greater flexibility is provided with a complete decoupling between data and its schema.
+Cell stores provide a relational-like, tabular level of abstraction to business users while leveraging recent database technologies, such as key-value stores and document stores. This allows to scale up and out the efficient storage and real-time retrieval of highly dimensional data, with a number of dimensions several orders of magnitude higher -- to date 10,000+ dimensions -- than what traditional OLAP data cubes can handle. A greater flexibility is provided with a complete decoupling between data and its schema.
 
 Cells are the primary citizens and exist in different forms, which can be explained with an analogy to the state of matter: as a gas for efficient storage, as a solid for efficient retrieval, and as a liquid for efficient interaction with the business users. Cell stores were abstracted from, and are compatible with the XBRL standard for importing and exporting data.
 
@@ -108,15 +108,19 @@ Popular column stores include BigTable \cite{Chang2008}, HBase \cite{HBase}, Cas
 
 \subsection{OLAP}
 
-OLAP \cite{Codd1993} stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, aggregated (roll ups). OLAP is compatible with spreadsheet front ends using pivot table to visualize the data in a business-friendly way, and with BI tools such as Tableau. The MDX language \cite{Nolan1999} is a standard way of querying for data cubes. There are two main flavors of OLAP:
+OLAP \cite{Codd1993} stands for OnLine Analytical Processing and targets dimensional data (data cubes). Data can be sliced and diced, drilled up and down, rolled up, etc. OLAP is compatible with spreadsheet front ends using pivot tables to visualize the data in a business-friendly way, and with BI tools such as Tableau. The MDX language \cite{Nolan1999} is a standard way of querying for data cubes.
+
+There are two main flavors of OLAP:
 \begin{description}
 \item[ROLAP] Data cubes are stored in tables organized in a star or snowflake setting: a central table with the data, and one additional table for each dimension. ROLAP is very rigid, and tables must be created for each data cube.
 \item[MOLAP] Data cubes are stored in an efficient proprietary format in memory. Data cubes that are queried often are precomputed and pre-aggregated. MOLAP reaches its limits as soon as data cube queries are more diverse and hard to predict in advance.
 \end{description}
 
-A third flavor, HOLAP, is a hybrid of the two. OLAP does not scale up well beyond a few hundred dimensions in total, and shows first signs of weakness with queries that have 10-15 dimensions.
+A third flavor, HOLAP, is a hybrid of the two. The main vendors of OLAP implementations are IBM Cognos, Microsoft Analysis Services, Oracle Hyperion Essbase, SAP BPC.
 
-The main vendors of OLAP implementations are IBM Cognos, Microsoft Analysis Services, Oracle Hyperion Essbase, SAP BPC.
+Some OLAP vendors document the limits of dimension support. Independently of data cubes, the total number of dimensions across cubes in an OLAP database scales well: some vendors claim support for two billion dimensions \cite{AnalysisServicesLimit}. However, the number of dimensions allowed within the \emph{same} data cube is smaller, and is typically, when documented, between 4 and 128. Hence, OLAP data is typically spread across cubes that use various subsets of dimensions.
+
+Finally, numerous discussions with companies attempting to store highly dimensional XBRL filings in (R)OLAP revealed that there are first signs of weakness with data cube queries that have 10+ dimensions, with an exponential increase in response times above this symbolic limit. Yet some XBRL taxonomies from the European Banking Authority \cite{DPM} do have cubes with more than 10 dimensions.
 
 \subsection{Graph databases}
 
@@ -140,7 +144,7 @@ Creating a database or a table on the servers often requires interacting with IT
 \item[Information leak] E-mails can be sent, by mistake or not, outside of the company.
 \end{description}
 
-Cell stores aim at keeping the excellent and proven spreadsheet interface, while fixing these issues by seamlessly integrating the spreadsheet with a database backend.
+Cell stores aim at keeping the excellent and proven spreadsheet interface, while fixing these issues by seamlessly integrating the spreadsheet with a database backend. This approach is similar to the use of BI tools on top of OLAP backends.
 
 \section{Why cell stores}
 \label{section-why}
@@ -153,7 +157,7 @@ Cell stores leverage the advantage of the aforementioned state-of-the-art techno
 \item Like column stores, cell stores focus on projection and selection, and denormalize the data. 
 \item Like document stores, schemas are not needed upfront and can be provided at will at query time.
 \item Like OLAP, cell stores expose the data cube abstraction to the user.
-\item Cell stores can handle highly dimensional data, scaling up in the number of dimensions further than OLAP, because storage works at the cell level.
+\item Cell stores can handle highly dimensional data, scaling up in the number of dimensions further than OLAP, because storage works at the cell level. A cell store is simply a single data cube with 10,000+ dimensions.
 \item Cell stores expose the data via a familiar spreadsheet-like interface to the business users, who are in complete control of their taxonomies (schemas) and rules.
 \end{itemize}
 
@@ -200,7 +204,7 @@ In the same way as gas can be stored in containers, the cell gas can (should) be
 
 \subsection{Hypercubes}
 
-After cells, the next most important construct is the hypercube. In the cell store paradigm, hypercubes are queries that correspond to both selection and projection in the relational algebra. Unlike in the relational algebra though, selection and projection are the same.
+After cells, the next most important construct is the hypercube. In the cell store paradigm, hypercubes are queries that correspond to both selection and projection in the relational algebra. Unlike in the relational algebra though, selection and projection are the same. Cell store hypercubes correspond to OLAP data cubes, yet they are queries, not schemas.
 
 \subsubsection{Point queries and indices}
 
@@ -352,10 +356,10 @@ Unit & US Dollars \\
 
 In particular, a hypercube is highly structured.
 
-\subsubsection{The World Hypercube}
-Theoretically, it would be feasible to build a hypercube with all dimensions used in the gas of cells, allowing default values for all of these. Then all cells would belong to this hypothetical hypercube, called the World Hypercube. However, this is an extremely sparse hypercube, and the size of this hypercube would typically be orders of magnitude greater than the entire visible universe.
+\subsubsection{The world hypercube}
+Theoretically, it would be feasible to build a hypercube with all dimensions used in the gas of cells, allowing default values for all of these. Then all cells would belong to this hypothetical hypercube, called the world hypercube. However, this is an extremely sparse hypercube, and the size of this hypercube would typically be orders of magnitude greater than the entire visible universe.
 
-Cell stores store their cells individually, at the lowest level of granularity possible. This allows fitting hypercubes that have as many as 10,000+ dimensions on a single machine.
+Cell stores store their cells individually, at the lowest level of granularity possible. This allows fitting world hypercubes that have as many as 10,000+ dimensions on a single machine.
 
 \subsubsection{Materialized hypercube}
 
@@ -503,15 +507,15 @@ To facilitate the definition of rules, concepts and dimension members are organi
 The data model behind the cell store can be described as an abstract mathematical model involving set theory and relations, in a way similar to the relational model.
 \subsection{Cell Store instance}
 
-Given a set of dimensions $\mathbb{D}$, a set of members $\mathbb{M}$, a set of concepts\footnote{In the formal model, concepts are handled separately from dimensions for pedagogical purposes.} $\mathbb{C}$ and a set of values $\mathbb{S}$, a cell is given by:
+Given a set of dimensions $\mathbb{D}$, a set of members $\mathbb{M}$, a set of concepts\footnote{In the formal model, concepts are handled separately from dimensions for pedagogical purposes.} $\mathbb{C}$ and a set of values $\mathbb{V}$, a cell is given by:
 
 \begin{itemize}
-\item a concept $c$
-\item a dimension-member mapping $m$, also referred to as the dimensional coordinates of the cell
-\item a value $v$
+\item a concept $c \in C$
+\item a mapping that associates each dimension with a member, $m \in \mathbb{M}^\mathbb{D}$ (an alternate notation is $\mathbb{D}\stackrel{m}{\longrightarrow}\mathbb{M}$), also referred to as the dimensional coordinates of the cell
+\item a value $v \in V$
 \end{itemize}
 
-The \emph{world hypercube} contains all the theoretically possible cells and can be defined as a cartesian product:
+The \emph{world hypercube} contains all the theoretically possible cells and can be defined as a cartesian product of the above three sets:
 
 $$\mathcal{H}(\mathbb{C}, \mathbb{D}, \mathbb{M}, \mathbb{V})=\mathbb{C}\times\mathbb{M}^\mathbb{D}\times\mathbb{V}$$
 
@@ -547,7 +551,9 @@ $$v\in\mathcal{T}(c)$$
 $$\{d\in\mathbb{D}, m(d)\neq\mathcal{D}(d)\} \text{ is finite}$$
 \end{enumerate}
 
-In practice, there are two reasons why the finite support condition is satisfied: first, the number of dimensions is itself finite. Second, default members are stored as the absence of any member, and a dimension associated with a default member is simply omitted. Hence, cells occupy a reasonable size in memory even with a high or even infinite number of dimensions.
+In practice, there are two reasons why the finite support condition is satisfied: first, the number of dimensions is itself finite. Second, default members are stored as the absence of any member, and a dimension associated with a default member is simply omitted in cell storage. Hence, cells occupy a reasonable size in memory even with a high or even infinite number of dimensions.
+
+Typically, many cells map the default value to each dimension, except for a few limited standard ones such as \emph{entity, period, unit}. Such cells are said to be non-dimensional. They are often aggregates of dimensional cells.
 
 \subsection{Hypercube queries}
 
@@ -648,7 +654,7 @@ We now give details on the existing implementation on top of document stores (No
 
 The first cell store was implemented on top of a document store (MongoDB \cite{MongoDB}), entirely with the JSONiq language \cite{JSONiq}. It is now running on production.
 
-The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly \cite{SECXBRL.info}. Hypercube queries or spreadsheet queries can be made via a REST API.
+The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly [...]. Hypercube queries or spreadsheet queries can be made via a REST API.
 
 From a document store metadata perspective, the implementation is very simple, as only two collections are used:
 
@@ -671,7 +677,7 @@ From a document store metadata perspective, the implementation is very simple, a
 
 
 \begin{description}
-\item[facts] This is where the data lies. The SEC repository \cite{SECXBRL.info} contains the order of magnitude of one hundred million facts (200 GB). Each fact is a JSON object as depicted on Figure \ref{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
+\item[facts] This is where the data lies. The SEC repository [...] contains the order of magnitude of one hundred million facts (200 GB). Each fact is a JSON object as depicted on Figure \ref{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
 \item[components] The metadata is stored here (ca. 100 GB). Each component contains a hierarchy of concepts, a couple of hypercubes, a spreadsheet definition, business rules, concept metadata such as labels in various languages, and documentation. Given a component, data cubes or spreadsheet views can be built.
 \end{description}
 
@@ -697,11 +703,9 @@ A cell store could be stored in a graph database, by splitting each cell into se
 
 \section{Performance}
 \label{section-performance}
-Measurements were performed on top of the first cell store repository, secxbrl.info.
+Measurements were performed on top of the first cell store repository. The repository contains 300 GB of data, i.e., 100+ million cells, as well as 200 more GB of metadata, i.e., 6+ million static, yet not precomputed, hypercube queries.
 
-It contains 300 GB of data, i.e., 100+ million cells, as well as 200 more GB of metadata, i.e., 6+ million static, yet not precomputed, hypercube queries.
-
-Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. The computation is done on Amazon EC2 machines, and the data is hosted by compose.io, also on Amazon machines in the same region (US East).
+Hypercube queries are done via a REST API, implemented in JSONiq and executed with the underlying Zorba engine. For all measurements presented in this paper, the computation is done on a single Amazon EC2 m4.4xlarge machine (16 cores, 64 GiB of memory). The underlying document store, MongoDB, is hosted on a single r3.large machine (2 cores, 15.26 GiB of memory) with a 4500 IOPS SDD EBS volume of 1.5 TiB. The indices on dimensions and on metadata occupy roughly 200 GB.
 
 \subsection{Human acceptance threshold}
 
@@ -709,7 +713,7 @@ The end goal of the design of cell stores is to return results in real time, tha
 
 As can be seen on Figure \ref{fig-measurements}, the goal is achieved for the simple use cases tested, and for a repository size above the lower end of typical benchmarks, ca. 100 GB. With 200 GB of data, this is the case. Cell stores can execute queries on top and across XBRL data that could not be executed in real time before. The response times were measured at the same geographical location as the cell store data and query engine (US East). 
 
-The benefit of running flexible hypercube queries in real time comes at the cost of response times slightly above OLAP standards  -- yet still sub-second -- for the simplest queries such as point queries. For these queries have, the cell store has response times on the order of magnitude of 100 milliseconds. As a comparison, some OLAP vendors (e.g., Oracle Hyperion Essbase) report response times at this magnitude or below (10 ms or sometimes 1 ms).
+The benefit of running flexible, highly-dimensional (10+) hypercube queries in real time comes at the cost of response times slightly above OLAP standards, yet still sub-second, for queries with less dimensions. For low-dimensional as well as highly dimensional queries, the cell store has response times on the order of magnitude of 100 milliseconds. As a comparison, some OLAP vendors (e.g., Oracle Hyperion Essbase) report response times at this magnitude or below (ca. 100 ms) \cite{Hyperion2013}.
 
 Future cell store implementations (for example, a native cell store) are likely to improve this performance.
 
@@ -760,25 +764,30 @@ Number of validated facts (roll-up and roll-forward rules)&2.1&0&54\\
 \end{figure*}
 
 \subsection{Static hypercubes}
-
+\label{section-static-hypercubes}
 Figure \ref{fig-measurements} also shows response times for static hypercube queries. The response time for static or dynamic (on the fly) hypercubes is mostly similar, as the underlying execution machinery is the same, however static hypercubes have the advantage of being real-world queries, in that these are the hypercubes used by companies to organize their fiscal reports to the SEC.
 
 It is important to note that these static hypercubes are not schemas: they are \emph{queries} executed against the world hypercube, which has 10,000+ dimensions and 100,000,000 non-empty cells.
 
-It can be seen that, for the fiscal report used in these measurements (American Express, second quarter of 2015), typical response times oscillate between 100ms and 500ms, with a number of dimensions between 7 and 13. These numbers are typical and very similar for other SEC fiscal filings (yearly or quarterly).
+It can be seen that, for the fiscal report used in these measurements (160 static hypercubes in the filing by American Express for the second quarter of 2015), typical response times oscillate between 100ms and 500ms, with a number of dimensions between 7 and 13. These numbers are typical and very similar for other SEC fiscal filings (yearly or quarterly).
 
 \subsection{Dimensional scale up}
 
-The second series of measurements were performed in order to show that cell stores seamlessly scale up as the number of dimensions in a query increases. Typically, experience from various companies that query with XBRL filings is that, past 10 dimensions in a query, there is an exponential growth in response times that prevents going much beyond this barrier.
+The second series of measurements were performed in order to show that cell stores seamlessly scale up as the number of dimensions in a query increases.
 
-We randomly picked cells with various numbers of dimensions, and built the corresponding point queries. Figure \ref{figure-dimension-scaleup} shows that the response time is almost flat across various numbers of dimension between 5 and 16, largely above 10. The irregularity of the curve, in particular the peak at 12, is most likely to be an artefact due to the selected cells.
+Cell stores dimensionally scale up in two ways: first, the total number of dimensions of the world hypercube can be as high as 10,000. While one may argue whether it makes sense to have as many dimensions on the semantic level (there are likely to be semantic duplicates), there \emph{are} so many dimensions in real-world SEC filings in their raw form.
+
+Second, the number of dimensions in single hypercube queries scales up as well. Typically, experience from various companies that query XBRL filings such of those of the European Banking Authority is that, past 10 dimensions in a query, there is an exponential growth in response times that prevents going much beyond this barrier. Wada-san of the BOJ \cite{EBALimits} has documented findings about these limitations.
+
+We randomly picked cells with various numbers of dimensions, and built the corresponding point queries. Figure \ref{figure-dimension-scaleup} shows that the response time is almost flat across various numbers of dimension between 5 and 16, largely past the 10 barrier. We haven't encountered a limit yet other than the dimensionality of the data available. The irregularity of the curve, in particular the peak at 12, is most likely to be an artefact due to the selected cells.
 
 \begin{figure}
 \begin{tikzpicture}
 \begin{axis}[
   xlabel=\# dimensions of the queried facts and of the query,
-  ylabel=avg. fact lookup time on 32 tries
+  ylabel=avg. fact lookup time on 32 tries,
   xmin=5,
+  xmax=16,
   ymin=110,
   ymax=140
 ]
@@ -789,15 +798,37 @@ We randomly picked cells with various numbers of dimensions, and built the corre
 \label{figure-dimension-scaleup}
 \end{figure}
 
-\subsection{Concurrency scale-up}
+\subsection{Concurrency scale up}
 
-Data warehouses are typically accessed by concurrent users -- typically, tests are performed with 100 or 1000 users. Because cell stores rely on an underlying data store, data clustering and duplication can be, and is delegated to it. The querying layer can be fully scaled out with any number of independent servers.
+Data warehouses are typically accessed by concurrent users -- typically, benchmarks are performed with 100 or 1000 concurrent users or calls.
 
-The theoretical limit of what cell stores can handle in terms of both size and throughput is hence that of what data storage can handle. Since the querying layer in which cell stores are implemented is decoupled from the storage layer, the latter can be chosen based on the desired performance. Cell stores currently support MongoDB and MarkLogic data storage backends in production.
+We performed throughput measurements with concurrent static hypercube queries with a single EC2 server and a single MongoDB backend. The queries were executed in batches of 160 that correspond to the same filing used in section \ref{section-static-hypercubes}, with 160 to 2720 (17 concurrent users) in total. Like data warehouses, the average time spent by the cell store per request, corresponding to the inverse of the throughput, decreases as requests increase. It starts at ca. 200ms and goes down to an asymptotical 20ms. This is one order of magnitude slower than what OLAP vendors typically report (ca. 1-2 ms)
+
+Because cell stores rely on an underlying data store, data clustering and duplication can be, and is delegated to it. The querying layer can be fully scaled out with any number of independent servers.
+ 
+ The theoretical limit of what cell stores can handle in terms of both size and throughput is hence that of what data storage can handle. Since the querying layer in which cell stores are implemented is decoupled from the storage layer, the latter can be chosen based on the desired performance. Cell stores currently support MongoDB and MarkLogic data storage backends in production.
+
+\begin{figure}
+\begin{tikzpicture}
+\begin{axis}[
+  xlabel=\# number of concurrent requests,
+  ylabel=avg. time/request (inv. throughput) in ms,
+  xmin=1,
+  ymin=0,
+  ymax=200
+]
+\addplot[sharp plot] table {concurrency.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Average time per request for an increasing number of concurrent requests}
+\label{figure-concurrency}
+\end{figure}
+
+
 
 \section{Future Work}
 
-We are now beginning to test the cell store technology with further XBRL taxonomies such as the Data Point Model used by the European Banking Authority.
+We are now beginning to test the cell store technology with further XBRL taxonomies such as the Data Point Model used by the European Banking Authority. In collaboration with the industry, we are especially interested in finding out the size (total number of facts) and dimensionality (query hypercube size) from which cell stores begin to show limitations.
 
 Also, we are considering populating a database from the TPC-H benchmark with the relational mapping, and executing TPC-H queries on top, in order to compare with other implementations.
 
@@ -807,11 +838,13 @@ Also, we will continue to work on improving performance. In a farther future, we
 
 \section{Conclusion}
 
-Cell stores leverage the latest database technologies, but completely give control over their data to business users. The data is stored at the cell level, in a single, big collection (gas of cells) and can be clustered, replicated, and retrieved efficiently. Cells can be assembled into data cubes with hypercube queries, and assembled into spreadsheet views, with which business users can interact (read, write) with the data. Business users can define their own taxonomies, schemas, maps, rules without any interaction with the IT department.
+Cell stores leverage the latest database technologies to scale up storage and retrieval of highly dimensional data at levels higher than the status quo -- more than 10,000 dimensions in total. The response time is almost flat, rather than exponential, in the number of queried dimensions. The price to pay for this in the first cell store implementation is an observed loss of performance by one order of magnitude for the queries of lower dimensionality compared to current industry standards. 
+
+The data is stored at the cell level, in a single, big collection (gas of cells) and can be clustered, replicated, and retrieved efficiently. Cells can be assembled into data cubes with hypercube queries, and assembled into spreadsheet views, with which business users can interact (read, write) with the data. Business users can define their own taxonomies, schemas, maps, rules without any interaction with the IT department.
 
 \section{Acknowledgements}
 
-This is joint work. The implementation of the first cell store on top of a document store has been made as a team effort by [...] (also to be thanked for performing several rounds of proof reading), [...]. We received a lot of very useful advice from [...].
+The implementation of the first cell store on top of a document store has been made as a team effort by [...] (also to be thanked for performing several rounds of proof reading), [...]. We received a lot of very useful advice from [...].
 
 \bibliographystyle{abbrv}
 \bibliography{cellstores}
