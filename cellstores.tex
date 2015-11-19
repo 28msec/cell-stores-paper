@@ -8,6 +8,8 @@
 \usepackage{subcaption}
 \usepackage{pgfplots}
 %\usepackage[usenames,dvipsnames]{color}
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
 \begin{document}
 
 \title{Cell Stores}
@@ -785,7 +787,7 @@ We randomly picked cells with various numbers of dimensions, and built the corre
 \begin{tikzpicture}
 \begin{axis}[
   xlabel=\# dimensions of the queried facts and of the query,
-  ylabel=avg. fact lookup time on 32 tries,
+  ylabel=avg. fact lookup time on 32 tries in ms,
   xmin=5,
   xmax=16,
   ymin=110,
