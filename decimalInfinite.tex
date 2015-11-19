@@ -14,7 +14,7 @@
 
 \author{
 \alignauthor
-\\
+-\\
 }
 \date{6 March 2015}
 \maketitle
@@ -49,7 +49,7 @@ When decimalInfinite was designed, to the extent of our knowledge and our invest
 
 This paper contributes an encoding that solves this problem. More recently, we became aware of the Rishe encoding (Section \ref{section-rishe}), which solves the same problem. However, decimalInfinite uses a different approach and does not require any calibration of choice of intervals. decimalInfinite also improves the asymptotic complexity for large decimals or integers.
 
-The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store. Another implementation is available in JSONiq \cite{decimalInfiniteJSONiq}: the encoding takes only 117 lines of code.
+The encoding and decoding algorithms have been implemented in C++ and are used on production machines to store decimals as BSON binaries \cite{BSON}, on a MongoDB \cite{MongoDB} data store. Another implementation is available in JSONiq \cite{JSONiq}: the encoding takes only 117 lines of code.
 
 The decimalInfinite encoding relies on decomposing the underlying decimal into a normal form, as is typically done in other encodings. This decomposition is made of an overall sign, an exponent sign, an exponent and a significand (also called mantissa by Von Neumann, although, as is common practice, we prefer to avoid this terminology because of its different meaning for logarithm computation). These four components are encoded in turn and in this order.
 
@@ -739,7 +739,7 @@ Unfortunately, MongoDB does not use a full lexicographic ordering of binaries (r
 
 The code has been running with no known issues on production servers since 2012.
 
-Also, decimalInfinite was implemented in JSONiq \cite{decimalInfiniteJSONiq} where it was experimentally checked that the order is preserved on sample ranges.
+Also, decimalInfinite was implemented in JSONiq \cite{JSONiq} where it was experimentally checked that the order is preserved on sample ranges.
 
 \section{Conclusion}
 
@@ -749,72 +749,6 @@ We introduced a binary encoding that supports the entire decimal value space inc
 decimalInfinite was implemented [...] with the help of [...]. Also, many thanks to [...] for his prompt and useful feedback.
 
 \bibliographystyle{abbrv}
-\begin{thebibliography}{10}
-
-\bibitem{BSON}
-{{BSON (Binary JSON)}}.
-\newblock \url{http://www.bsonspec.org/}.
-
-\bibitem{MAPLE}
-Maple.
-\newblock \url{http://www.maplesoft.com/}.
-
-\bibitem{MATLAB}
-Matlab.
-\newblock \url{http://mathworks.com/products/matlab}.
-
-\bibitem{MATHEMATICA}
-{{Wolfram Mathematica}}.
-\newblock \url{http://www.wolfram.com/mathematica}.
-
-\bibitem{JSON}
-E.~I. 2013.
-\newblock {JSON: JavaScript Object Notation}.
-\newblock \url{http://www.json.org/}, October 2013.
-
-\bibitem{XML}
-T.~Bray, J.~Paoli, C.~M. Sperberg-McQueen, E.~Maler, and F.~Yergeau.
-\newblock {XML Specification (Recommendation)}.
-\newblock \url{http://www.w3.org/TR/xml}, November 2008.
-
-\bibitem{VonNeumann1946}
-A.~Burks, H.~Goldstine, and J.~von Neumann.
-\newblock Preliminary discussion of the logical design of an electronic
-  computing instrument.
-\newblock {\em Inst. for Advanced Study, Princeton, N. J.}, 1946.
-
-\bibitem{ChenHo}
-T.~C. Chen and I.~T. Ho.
-\newblock Storage-efficient representation of decimal data.
-\newblock {\em Commun. ACM}, 18(1):49--52, Jan. 1975.
-
-\bibitem{DPD}
-M.~Cowlishaw.
-\newblock Densely packed decimal encoding.
-\newblock {\em Computers and Digital Techniques, IEE Proceedings -},
-  149(3):102--104, May 2002.
-
-\bibitem{decimalInfiniteJSONiq}
-\newblock {{decimalInfinite implementation in JSONiq}}.
-\newblock \url{---}, June 2015.
-
-\bibitem{Kornerup1983}
-D.~Matula and P.~Kornerup.
-\newblock An order preserving finite binary encoding of the rationals.
-\newblock In {\em Computer Arithmetic (ARITH), 1983 IEEE 6th Symposium on},
-  pages 201--209, June 1983.
-
-\bibitem{MongoDB}
-MongoDB.
-\newblock {MongoDB}.
-\newblock \url{http://www.mongodb.org/}, 2009.
-
-\bibitem{Rishe1992}
-N.~Rishe.
-\newblock Interval-based approach to lexicographic representation and
-  compression of numeric data.
-\newblock {\em Data and Knowledge Engineering}, 8(4):339 -- 351, 1992.
-
-\end{thebibliography}
+\bibliography{decimalInfinite}
 
 \end{document}
