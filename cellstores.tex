@@ -17,10 +17,12 @@
 \numberofauthors{1}
 
 \author{
-\alignauthor
--
+Ghislain Fourny\\
+       \affaddr{28msec, Inc.}\\
+       \affaddr{Z\"urich, Switzerland}\\
+       \email{g@28.io}
 }
-\date{30 October 2015}
+\date{23 May 2016}
 \maketitle
 
 \begin{abstract}
@@ -656,7 +658,7 @@ We now give details on the existing implementation on top of document stores (No
 
 The first cell store was implemented on top of a document store (MongoDB \cite{MongoDB}), entirely with the JSONiq language \cite{JSONiq}. It is now running on production.
 
-The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly [...]. Hypercube queries or spreadsheet queries can be made via a REST API.
+The in-memory processing is performed by the Zorba engine \cite{Zorba}. The ETL was made with an existing XBRL processor, Reporting Standard, in Java. It contains fiscal information reported by public US companies to the SEC. The data is available publicly \cite{SECXBRL.info}. Hypercube queries or spreadsheet queries can be made via a REST API.
 
 From a document store metadata perspective, the implementation is very simple, as only two collections are used:
 
@@ -679,7 +681,7 @@ From a document store metadata perspective, the implementation is very simple, a
 
 
 \begin{description}
-\item[facts] This is where the data lies. The SEC repository [...] contains the order of magnitude of one hundred million facts (200 GB). Each fact is a JSON object as depicted on Figure \ref{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
+\item[facts] This is where the data lies. The SEC repository \cite{SECXBRL.info} contains the order of magnitude of one hundred million facts (200 GB). Each fact is a JSON object as depicted on Figure \ref{fig-fact}. Several indexes on the fields used most (concept, entity) make sure hypercube queries are efficient. Hypercube queries can directly be translated to MongoDB queries, and hence almost completely pushed to the server backend.
 \item[components] The metadata is stored here (ca. 100 GB). Each component contains a hierarchy of concepts, a couple of hypercubes, a spreadsheet definition, business rules, concept metadata such as labels in various languages, and documentation. Given a component, data cubes or spreadsheet views can be built.
 \end{description}
 
@@ -846,7 +848,7 @@ The data is stored at the cell level, in a single, big collection (gas of cells)
 
 \section{Acknowledgements}
 
-The implementation of the first cell store on top of a document store has been made as a team effort by [...] (also to be thanked for performing several rounds of proof reading), [...]. We received a lot of very useful advice from [...].
+The implementation of the first cell store on top of a document store has been made as a team effort by Matthias Brantner, William Candillon, Federico Cavalieri (also to be thanked for performing several rounds of proof reading), Dennis Knochenwefel, Alexander Kreutz and myself. We received a lot of very useful advice from Charles Hoffman.
 
 \bibliographystyle{abbrv}
 \bibliography{cellstores}
